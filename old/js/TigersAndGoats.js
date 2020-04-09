@@ -3,46 +3,62 @@
     Class declaration for all agents
 ==================================================================================
 */
-function expectimaxAgent() {
-    this.Index = 0;
-    this.History = new HistoryStack();
-}
-function minimaxAgent() {
-    this.Index = 0;
-    this.History = new HistoryStack();
-}
-function alphaBetaAgent() {
-    this.Index = 0;
-    this.History = new HistoryStack();
-}
-function scoutAgent() {
-    this.Index = 0;
-    this.History = new HistoryStack();
-}
-function alphaBetaWithTTAgent() {
-    this.Index = 0;
-    this.History = new HistoryStack();
-}
-function scoutWithTTAgent() {
-    this.Index = 0;
-    this.History = new HistoryStack();
-}
-function mtdfAgent() {
-    this.Index = 0;
-    this.History = new HistoryStack();
-}
+
 /*
 ==================================================================================
-    All agents use the same evaluation function
+    The evaluation function evaluates a game state and then returns a score.
+    The score depends on the mobility of the tigers and the number of goats left.
 ==================================================================================
 */
-expectimaxAgent.prototype.evaluate = evaluate;
-minimaxAgent.prototype.evaluate = evaluate;
-alphaBetaAgent.prototype.evaluate = evaluate;
-scoutAgent.prototype.evaluate = evaluate;
-alphaBetaWithTTAgent.prototype.evaluate = evaluate;
-scoutWithTTAgent.prototype.evaluate = evaluate;
-mtdfAgent.prototype.evaluate = evaluate;
+class Agent {
+    constructor() {
+        this.Index = 0;
+        this.History = new HistoryStack();
+    }
+    evaluate(gameState, actions, agentIndex) {
+        function Score(score) {
+            if (agentIndex === 0)
+                return score;
+            else return -score;
+        }
+        if (gameState.Result === 0)
+            return Score(10000);
+        else if (gameState.Result === 1)
+            return Score(-10000);
+        else if (gameState.Result === 2)
+            return -5000;
+        var score = 0;
+        var nGoats = gameState.OutsideGoats;
+        for (var i = 0; i < gameState.CurrentPosition.length; i++)
+            if (gameState.CurrentPosition[i] === 'G')
+                nGoats++;
+        var numActions = 0;
+        var numCaptures = 0;
+        for (var i = 0; i < actions.length; i++) {
+            if (actions[i][1] > -1)
+                numCaptures++;
+            else numActions++;
+        }
+        score -= 4 * nGoats;
+        if (gameState.SideToPlay === 0) { //if tigers are to move
+            score += numActions;
+            score += 2 * numCaptures;
+        } else { //if goats are to move
+            for (var i = 0; i < gameState.CurrentPosition.length; i++) { //suppose that it is tigers to move and assign a score anyway !
+                if (gameState.CurrentPosition[i] === 'T') {
+                    for (var j = 0; j < MoveActions[i].length; j++)
+                        if (gameState.CurrentPosition[MoveActions[i][j]] === 'E')
+                            score += 1;
+                    for (var j = 0; j < CaptureActions.length; j++)
+                        if (CaptureActions[j][0] === i && gameState.CurrentPosition[CaptureActions[j][1]] === 'G' && gameState.CurrentPosition[CaptureActions[j][2]] === 'E')
+                            score += 2;
+                }
+            }
+        }
+        return Score(score);
+    }
+}
+
 
 /*
 ==================================================================================
@@ -53,127 +69,138 @@ mtdfAgent.prototype.evaluate = evaluate;
 ==================================================================================
 */
 
-expectimaxAgent.prototype.getAction = function (gameState) {
-    var nodesExpanded = 0;
-    var leavesReached = 0;
-    var index = this.Index;
-    var history = this.History;
-    function expectimax(state, depth, agentIndex) {
-        history.push(state);
-        var actions = state.getLegalActions();
+class expectimaxAgent extends Agent {
+    getAction(gameState) {
+        const data = {
+            nodesExpanded: 0,
+            leavesReached: 0,
+            index: this.Index,
+            history: this.History,
+        };
+        var depth = 1;
+        while (true) {
+            const result = this.expectimax(gameState, depth, this.Index, data);
+            postMessage([result[0], result[1], depth, data.nodesExpanded, data.leavesReached]); //result = score, action, depth, nodesExpanded
+            depth++;
+        }
+    }
+    expectimax(state, depth, agentIndex, data) {
+        data.history.push(state);
+        const actions = state.getLegalActions();
         var action = [0, 0, 0];
         var score;
-        if (depth < 1 || actions.length == 0 || state.Result != -1) {
-            history.pop();
-            leavesReached++;
-            return [this.evaluate(state, actions, index), [0, 0, 0]];
-        }
-        else if (agentIndex == index) {
+        if (depth < 1 || actions.length === 0 || state.Result != -1) {
+            data.history.pop();
+            data.leavesReached++;
+            return [super.evaluate(state, actions, data.index), [0, 0, 0]];
+        } else if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = expectimax(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2)[0];
-                nodesExpanded++;
+                result = this.expectimax(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data)[0];
+                data.nodesExpanded++;
                 if (score < result) {
                     score = result;
                     action = actions[i];
                 }
             }
-        }
-        else {
+        } else {
             score = 0;
             var num = 0;
             for (var i = 0; i < actions.length; i++) {
-                score += expectimax(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2)[0];
-                nodesExpanded++;
+                score += this.expectimax(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data)[0];
+                data.nodesExpanded++;
                 num++;
             }
             score = (Math.round((score / num) * 100) / 100);
         }
-        history.pop();
+        data.history.pop();
         return [score, action];
     }
-    var depth = 1;
-    var result;
-    while (true) {
-        leavesReached = 0;
-        result = expectimax(gameState, depth, this.Index);
-        postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result = score, action, depth, nodesExpanded
-        depth++;
-    }
 }
-minimaxAgent.prototype.getAction = function (gameState) {
-    var nodesExpanded = 0;
-    var leavesReached = 0;
-    var index = this.Index;
-    var history = this.History;
-    function minimax(state, depth, agentIndex) {
-        history.push(state);
+
+class minimaxAgent extends Agent {
+    getAction(gameState) {
+        const data = {
+            nodesExpanded: 0,
+            leavesReached: 0,
+            index: this.Index,
+            history: this.History,
+        };
+        var depth = 1;
+        while (true) {
+            const result = this.minimax(gameState, depth, this.Index, data);
+            postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result = score, action, depth, nodesExpanded
+            depth++;
+        }
+    }
+    minimax(state, depth, agentIndex, data) {
+        data.history.push(state);
         var actions = state.getLegalActions();
         var action = [0, 0, 0];
         var score;
-        if (depth < 1 || actions.length == 0 || state.Result != -1) {
-            history.pop();
-            leavesReached++;
-            return [this.evaluate(state, actions, index), [0, 0, 0]];
-        }
-        else if (agentIndex == index) {
+        if (data.depth < 1 || actions.length === 0 || state.Result != -1) {
+            data.history.pop();
+            data.leavesReached++;
+            return [super.evaluate(state, actions, index), [0, 0, 0]];
+        } else if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = minimax(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2)[0];
-                nodesExpanded++;
+                result = this.minimax(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data)[0];
+                data.nodesExpanded++;
                 if (score < result) {
                     score = result;
                     action = actions[i];
                 }
             }
-        }
-        else {
+        } else {
             score = Number.POSITIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = minimax(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2)[0];
-                nodesExpanded++;
+                result = this.minimax(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data)[0];
+                data.nodesExpanded++;
                 if (score > result) {
                     score = result;
                     action = actions[i];
                 }
             }
         }
-        history.pop();
+        data.history.pop();
         return [score, action];
     }
-    var depth = 1;
-    var result;
-    while (true) {
-        leavesReached = 0;
-        result = minimax(gameState, depth, this.Index);
-        postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result = score, action, depth, nodesExpanded
-        depth++;
-    }
 }
-alphaBetaAgent.prototype.getAction = function (gameState) {
-    var nodesExpanded = 0;
-    var leavesReached = 0;
-    var index = this.Index;
-    var history = this.History;
-    function alphaBeta(state, depth, agentIndex, a, b) {
-        history.push(state);
+
+class alphaBetaAgent extends Agent {
+    getAction(gameState) {
+        const data = {
+            nodesExpanded: 0,
+            leavesReached: 0,
+            index: this.Index,
+            history: this.History,
+        };
+        var depth = 1;
+        while (true) {
+            const result = this.alphaBeta(gameState, depth, this.Index, data, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
+            postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
+            depth++;
+        }
+    }
+    alphaBeta(state, depth, agentIndex, data, a, b) {
+        data.history.push(state);
         var actions = state.getLegalActions();
         var action = [0, 0, 0];
         var score;
-        if (depth < 1 || actions.length == 0 || state.Result != -1) {
-            history.pop();
-            leavesReached++;
-            return [this.evaluate(state, actions, index), [0, 0, 0]];
-        }
-        else if (agentIndex == index) {
+        if (depth < 1 || actions.length === 0 || state.Result != -1) {
+            data.history.pop();
+            data.leavesReached++;
+            return [evaluate(state, actions, index), [0, 0, 0]];
+        } else if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = alphaBeta(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, a, b)[0];
-                nodesExpanded++;
+                result = this.alphaBeta(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, data, a, b)[0];
+                data.nodesExpanded++;
                 if (score < result) {
                     score = result;
                     action = actions[i];
@@ -183,13 +210,12 @@ alphaBetaAgent.prototype.getAction = function (gameState) {
                 if (score > a)
                     a = score;
             }
-        }
-        else {
+        } else {
             score = Number.POSITIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = alphaBeta(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, a, b)[0];
-                nodesExpanded++;
+                result = this.alphaBeta(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, data, a, b)[0];
+                data.nodesExpanded++;
                 if (score > result) {
                     action = actions[i];
                     score = result;
@@ -200,46 +226,48 @@ alphaBetaAgent.prototype.getAction = function (gameState) {
                     b = score;
             }
         }
-        history.pop();
+        data.history.pop();
         return [score, action];
     }
-    var result;
-    var depth = 1;
-    while (true) {
-        leavesReached = 0;
-        result = alphaBeta(gameState, depth, this.Index, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
-        postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
-        depth++;
-    }
 }
-scoutAgent.prototype.getAction = function (gameState) {
-    var nodesExpanded = 0;
-    var leavesReached = 0;
-    var index = this.Index;
-    var history = this.History;
-    function scout(state, depth, agentIndex, a, b) {
-        history.push(state);
+
+class scoutAgent extends Agent {
+    getAction(gameState) {
+        const data = {
+            nodesExpanded: 0,
+            leavesReached: 0,
+            index: this.Index,
+            history: this.History,
+        };
+        var depth = 1;
+        while (true) {
+            const result = this.scout(gameState, depth, this.Index, data, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
+            postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
+            depth++;
+        }
+    }
+    scout(state, depth, agentIndex, data, a, b) {
+        data.history.push(state);
         var actions = state.getLegalActions();
         var action = [0, 0, 0];
         var score;
-        if (depth < 1 || actions.length == 0 || state.Result != -1) {
-            history.pop();
-            leavesReached++;
-            return [this.evaluate(state, actions, index), [0, 0, 0]];
-        }
-        else if (agentIndex == index) {
+        if (depth < 1 || actions.length === 0 || state.Result != -1) {
+            data.history.pop();
+            data.leavesReached++;
+            return [evaluate(state, actions, data.index), [0, 0, 0]];
+        } else if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
             var n = b;
             for (var i = 0; i < actions.length; i++) {
-                result = scout(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, a, n)[0];
-                nodesExpanded++;
+                result = this.scout(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, a, n)[0];
+                data.nodesExpanded++;
                 if (score < result) {
-                    if (n == b || depth < 2) {
-                        score = result;                        
+                    if (n === b || depth < 2) {
+                        score = result;
                     } else {
-                        score = scout(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, result, b)[0];
-                        nodesExpanded++;
+                        score = this.scout(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, result, b)[0];
+                        data.nodesExpanded++;
                     }
                     action = actions[i];
                 }
@@ -249,19 +277,18 @@ scoutAgent.prototype.getAction = function (gameState) {
                     a = score;
                 n = a + 1;
             }
-        }
-        else {
+        } else {
             score = Number.POSITIVE_INFINITY;
             var result;
             var n = a;
             for (var i = 0; i < actions.length; i++) {
-                result = scout(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, n, b)[0];
-                nodesExpanded++;
+                result = this.scout(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, n, b)[0];
+                data.nodesExpanded++;
                 if (score > result) {
-                    if (n == a || depth < 2)
+                    if (n === a || depth < 2)
                         score = result;
                     else {
-                        score = scout(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, a, result)[0];
+                        score = this.scout(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, a, result)[0];
                     }
                     action = actions[i];
                 }
@@ -272,47 +299,50 @@ scoutAgent.prototype.getAction = function (gameState) {
                 n = b - 1;
             }
         }
-        history.pop();
+        data.history.pop();
         return [score, action];
     }
-    var result;
-    var depth = 1;
-    while (true) {
-        leavesReached = 0;
-        result = scout(gameState, depth, this.Index, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
-        postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
-        depth++;
-    }
 }
-alphaBetaWithTTAgent.prototype.getAction = function (gameState) {
-    var nodesExpanded = 0;
-    var leavesReached = 0;
-    var index = this.Index;
-    var history = this.History;
-    var transpositionTable = new HashTree();
-    function alphaBeta(state, depth, agentIndex, a, b) {
-        history.push(state);
-        var actions = state.getLegalActions();
-        var action = [0, 0, 0];        
-        var score;
-        if (depth < 1 || actions.length == 0 || state.Result != -1) {
-            history.pop();
-            leavesReached++;
-            return [this.evaluate(state, actions, index), [0, 0, 0]];
+
+class alphaBetaWithTTAgent extends Agent {
+    getAction(gameState) {
+        const data = {
+            nodesExpanded: 0,
+            leavesReached: 0,
+            index: this.Index,
+            history: this.History,
+            transpositionTable: new HashTree()
+        };
+        var depth = 1;
+        while (true) {
+            const result = this.alphaBeta(gameState, depth, this.Index, data, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
+            postMessage([result[0], result[1], depth, data.nodesExpanded, data.leavesReached]); //result: score, action, depth, nodesExpanded
+            depth++;
         }
-        var TTresult = transpositionTable.find(state.Hash);
+    }
+    alphaBeta(state, depth, agentIndex, data, a, b) {
+        data.history.push(state);
+        var actions = state.getLegalActions();
+        var action = [0, 0, 0];
+        var score;
+        if (depth < 1 || actions.length === 0 || state.Result != -1) {
+            data.history.pop();
+            data.leavesReached++;
+            return [this.evaluate(state, actions, data.index), [0, 0, 0]];
+        }
+        var TTresult = data.transpositionTable.find(state.Hash);
         if (TTresult != null) {
             if (TTresult[1] >= depth) {
-                if (TTresult[2] == TTresult[3]) {
-                    history.pop();
+                if (TTresult[2] === TTresult[3]) {
+                    data.history.pop();
                     return [TTresult[2], TTresult[0]];
                 }
                 if (TTresult[2] > b) {
-                    history.pop();
+                    data.history.pop();
                     return [TTresult[2], TTresult[0]];
                 }
                 if (TTresult[3] < a) {
-                    history.pop();
+                    data.history.pop();
                     return [TTresult[3], TTresult[0]];
                 }
                 a = Math.max(a, TTresult[2]);
@@ -326,12 +356,12 @@ alphaBetaWithTTAgent.prototype.getAction = function (gameState) {
                 }
             }
         }
-        if (agentIndex == index) {
+        if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = alphaBeta(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, a, b)[0];
-                nodesExpanded++;
+                result = this.alphaBeta(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, a, b)[0];
+                data.nodesExpanded++;
                 if (score < result) {
                     score = result;
                     action = actions[i];
@@ -339,15 +369,14 @@ alphaBetaWithTTAgent.prototype.getAction = function (gameState) {
                 if (score >= b)
                     break;
                 if (score > a)
-                    a = score;                
+                    a = score;
             }
-        }
-        else {
+        } else {
             score = Number.POSITIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = alphaBeta(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, a, b)[0];
-                nodesExpanded++;
+                result = this.alphaBeta(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, a, b)[0];
+                data.nodesExpanded++;
                 if (score > result) {
                     action = actions[i];
                     score = result;
@@ -355,60 +384,60 @@ alphaBetaWithTTAgent.prototype.getAction = function (gameState) {
                 if (score <= a)
                     break;
                 if (b > score)
-                    b = score;                
+                    b = score;
             }
         }
-        history.pop();
-        if (score <= a)
-            transpositionTable.insert(state.Hash, [action, depth, Number.NEGATIVE_INFINITY, score]);
-        else if (score >= b)
-            transpositionTable.insert(state.Hash, [action, depth, score, Number.POSITIVE_INFINITY]);
-        else 
-            transpositionTable.insert(state.Hash, [action, depth, score, score]);
+        data.history.pop();
+        if (score <= a) data.transpositionTable.insert(state.Hash, [action, depth, Number.NEGATIVE_INFINITY, score]);
+        else if (score >= b) data.transpositionTable.insert(state.Hash, [action, depth, score, Number.POSITIVE_INFINITY]);
+        else data.transpositionTable.insert(state.Hash, [action, depth, score, score]);
         return [score, action];
     }
-    var result;
-    var depth = 1;
-    while (true) {
-        leavesReached = 0;
-        result = alphaBeta(gameState, depth, this.Index, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
-        postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
-        depth++;
-    }
 }
-scoutWithTTAgent.prototype.getAction = function (gameState) {
-    var nodesExpanded = 0;
-    var leavesReached = 0;
-    var index = this.Index;
-    var history = this.History;
-    var transpositionTable = new HashTree();
-    function scout(state, depth, agentIndex, a, b) {
-        history.push(state);
+
+class scoutWithTTAgent extends Agent {
+    getAction(gameState) {
+        const data = {
+            nodesExpanded: 0,
+            leavesReached: 0,
+            index: this.Index,
+            history: this.History,
+            transpositionTable: new HashTree()
+        };
+        var depth = 1;
+        while (true) {
+            const result = this.scout(gameState, depth, this.Index, data, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
+            postMessage([result[0], result[1], depth, data.nodesExpanded, data.leavesReached]); //result: score, action, depth, nodesExpanded
+            depth++;
+        }
+    }
+    scout(state, depth, agentIndex, data, a, b) {
+        data.history.push(state);
         var actions = state.getLegalActions();
         var action = [0, 0, 0];
         var score;
-        if (depth < 1 || actions.length == 0 || state.Result != -1) {
-            history.pop();
-            leavesReached++;
-            return [this.evaluate(state, actions, index), [0, 0, 0]];
-        }        
-        var TTresult = transpositionTable.find(state.Hash);
+        if (depth < 1 || actions.length === 0 || state.Result != -1) {
+            data.history.pop();
+            data.leavesReached++;
+            return [this.evaluate(state, actions, data.index), [0, 0, 0]];
+        }
+        var TTresult = data.transpositionTable.find(state.Hash);
         if (TTresult != null) {
             if (TTresult[1] >= depth) {
-                if (TTresult[2] == TTresult[3]) { 
-                    history.pop();
+                if (TTresult[2] === TTresult[3]) {
+                    data.history.pop();
                     return [TTresult[2], TTresult[0]];
                 }
-                if (TTresult[2] > b) { 
-                    history.pop();
+                if (TTresult[2] > b) {
+                    data.history.pop();
                     return [TTresult[2], TTresult[0]];
                 }
                 if (TTresult[3] < a) {
-                    history.pop();
+                    data.history.pop();
                     return [TTresult[3], TTresult[0]];
                 }
                 a = Math.max(a, TTresult[2]);
-                b = Math.min(b, TTresult[3]);                
+                b = Math.min(b, TTresult[3]);
             }
             for (var i = 0; i < actions.length; i++) {
                 if (actions[i].compare(TTresult[0])) {
@@ -418,19 +447,19 @@ scoutWithTTAgent.prototype.getAction = function (gameState) {
                 }
             }
         }
-        if (agentIndex == index) {
+        if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
             var n = b;
             for (var i = 0; i < actions.length; i++) {
-                result = scout(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, a, n)[0];
-                nodesExpanded++;
+                result = this.scout(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, a, n)[0];
+                data.nodesExpanded++;
                 if (score < result) {
-                    if (n == b || depth < 2) {
+                    if (n === b || depth < 2) {
                         score = result;
                     } else {
-                        score = scout(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, result, b)[0];
-                        nodesExpanded++;
+                        score = this.scout(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, result, b)[0];
+                        data.nodesExpanded++;
                     }
                     action = actions[i];
                 }
@@ -440,19 +469,18 @@ scoutWithTTAgent.prototype.getAction = function (gameState) {
                     a = score;
                 n = a + 1;
             }
-        }
-        else {
+        } else {
             score = Number.POSITIVE_INFINITY;
             var result;
             var n = a;
             for (var i = 0; i < actions.length; i++) {
-                result = scout(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, n, b)[0];
-                nodesExpanded++;
+                result = this.scout(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, n, b)[0];
+                data.nodesExpanded++;
                 if (score > result) {
-                    if (n == a || depth < 2)
+                    if (n === a || depth < 2)
                         score = result;
                     else {
-                        score = scout(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, a, result)[0];
+                        score = this.scout(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, a, result)[0];
                     }
                     action = actions[i];
                 }
@@ -463,49 +491,59 @@ scoutWithTTAgent.prototype.getAction = function (gameState) {
                 n = b - 1;
             }
         }
-        history.pop();
-        if (score <= a)
-            transpositionTable.insert(state.Hash, [action, depth, Number.NEGATIVE_INFINITY, score]);
-        else if (score >= b)
-            transpositionTable.insert(state.Hash, [action, depth, score, Number.POSITIVE_INFINITY]);
-        else
-            transpositionTable.insert(state.Hash, [action, depth, score, score]);
+        data.history.pop();
+        if (score <= a) data.transpositionTable.insert(state.Hash, [action, depth, Number.NEGATIVE_INFINITY, score]);
+        else if (score >= b) data.transpositionTable.insert(state.Hash, [action, depth, score, Number.POSITIVE_INFINITY]);
+        else data.transpositionTable.insert(state.Hash, [action, depth, score, score]);
         return [score, action];
     }
-    var result;
-    var depth = 1;
-    while (true) {
-        leavesReached = 0;
-        result = scout(gameState, depth, this.Index, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
-        postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
-        depth++;
-    }
 }
-mtdfAgent.prototype.getAction = function (gameState) {
-    var nodesExpanded = 0;
-    var leavesReached = 0;
-    var index = this.Index;
-    var history = this.History;
-    var transpositionTable = new HashTree();
-    function MT(state, depth, agentIndex, test) {
-        history.push(state);
+
+class mtdfAgent extends Agent {
+    getAction(gameState) {
+        const data = {
+            nodesExpanded: 0,
+            leavesReached: 0,
+            index: this.Index,
+            history: this.History,
+            transpositionTable: new HashTree()
+        };
+        var result = this.evaluate(gameState, gameState.getLegalActions(), data.index);
+        var depth = 1,
+            guess, lowerBound, upperBound;
+        while (true) {
+            upperBound = Number.POSITIVE_INFINITY;
+            lowerBound = Number.NEGATIVE_INFINITY;
+            while (lowerBound < upperBound) {
+                if (result[0] === lowerBound) guess = result[0] + 1;
+                else guess = result[0];
+                result = this.MT(gameState, depth, this.Index, data, guess);
+                if (result[0] < guess) upperBound = result[0];
+                else lowerBound = result[0];
+            }
+            postMessage([result[0], result[1], depth, data.nodesExpanded, data.leavesReached]); //result: score, action, depth, nodesExpanded
+            depth++;
+        }
+    }
+    MT(state, depth, agentIndex, data, test) {
+        data.history.push(state);
         var actions = state.getLegalActions();
         var action = [0, 0, 0];
         var score;
-        if (depth < 1 || actions.length == 0 || state.Result != -1) {
-            history.pop();
-            leavesReached++;
-            return [this.evaluate(state, actions, index), [0, 0, 0]];
+        if (depth < 1 || actions.length === 0 || state.Result != -1) {
+            data.history.pop();
+            data.leavesReached++;
+            return [this.evaluate(state, actions, data.index), [0, 0, 0]];
         }
-        var TTresult = transpositionTable.find(state.Hash);
+        var TTresult = data.transpositionTable.find(state.Hash);
         if (TTresult != null) {
             if (TTresult[1] >= depth) {
                 if (TTresult[2] >= test) { //if TTresult is a high cutoff
-                    history.pop();
+                    data.history.pop();
                     return [TTresult[2], TTresult[0]];
                 }
                 if (TTresult[3] < test) { //if TTresult is a low cutoff
-                    history.pop();
+                    data.history.pop();
                     return [TTresult[3], TTresult[0]];
                 }
             }
@@ -517,12 +555,12 @@ mtdfAgent.prototype.getAction = function (gameState) {
                 }
             }
         }
-        if (agentIndex == index) {
+        if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = MT(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, test)[0];
-                nodesExpanded++;
+                result = this.MT(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, test)[0];
+                data.nodesExpanded++;
                 if (score < result) {
                     score = result;
                     action = actions[i];
@@ -530,13 +568,12 @@ mtdfAgent.prototype.getAction = function (gameState) {
                 if (score >= test)
                     break;
             }
-        }
-        else {
+        } else {
             score = Number.POSITIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = MT(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, test)[0];
-                nodesExpanded++;
+                result = this.MT(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, test)[0];
+                data.nodesExpanded++;
                 if (score > result) {
                     action = actions[i];
                     score = result;
@@ -545,82 +582,13 @@ mtdfAgent.prototype.getAction = function (gameState) {
                     break;
             }
         }
-        history.pop();
+        data.history.pop();
         if (score >= test) //if failed high
-            transpositionTable.insert(state.Hash, [action, depth, score, Number.POSITIVE_INFINITY]);
+            data.transpositionTable.insert(state.Hash, [action, depth, score, Number.POSITIVE_INFINITY]);
         else if (score < test) //if failed low
-            transpositionTable.insert(state.Hash, [action, depth, Number.NEGATIVE_INFINITY, score]);
+            data.transpositionTable.insert(state.Hash, [action, depth, Number.NEGATIVE_INFINITY, score]);
         return [score, action];
     }
-    var result = this.evaluate(gameState, gameState.getLegalActions(), index);
-    var depth = 1, guess, lowerBound, upperBound;
-    while (true) {
-        leavesReached = 0;
-        upperBound = Number.POSITIVE_INFINITY;
-        lowerBound = Number.NEGATIVE_INFINITY;
-        while (lowerBound < upperBound) {
-            if (result[0] == lowerBound)
-                guess = result[0] + 1;
-            else guess = result[0];
-            result = MT(gameState, depth, this.Index, guess);
-            if (result[0] < guess)
-                upperBound = result[0];
-            else
-                lowerBound = result[0];
-        }
-        postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
-        depth++;
-    }
-}
-
-/*
-==================================================================================
-    The evaluation function evaluates a game state and then returns a score.
-    The score depends on the mobility of the tigers and the number of goats left.
-==================================================================================
-*/
-function evaluate(gameState, actions, agentIndex) {
-    function Score(score) {
-        if (agentIndex == 0)
-            return score;
-        else return -score;
-    }
-    if (gameState.Result == 0)
-        return Score(10000);
-    else if (gameState.Result == 1)
-        return Score(-10000);
-    else if (gameState.Result == 2)
-        return -5000;
-    var score = 0;
-    var nGoats = gameState.OutsideGoats;
-    for (var i = 0; i < gameState.CurrentPosition.length; i++)
-        if (gameState.CurrentPosition[i] == 'G')
-            nGoats++;
-    var numActions = 0;
-    var numCaptures = 0;
-    for (var i = 0; i < actions.length; i++) {
-        if (actions[i][1] > -1)
-            numCaptures++;
-        else numActions++;
-    }    
-    score -= 4 * nGoats;
-    if (gameState.SideToPlay == 0) { //if tigers are to move
-        score += numActions;
-        score += 2 * numCaptures;
-    }
-    else { //if goats are to move
-        for (var i = 0; i < gameState.CurrentPosition.length; i++) { //suppose that it is tigers to move and assign a score anyway !
-            if (gameState.CurrentPosition[i] == 'T') {
-                for (var j = 0; j < MoveActions[i].length; j++)
-                    if (gameState.CurrentPosition[MoveActions[i][j]] == 'E')
-                        score += 1;
-                for (var j = 0; j < CaptureActions.length; j++)
-                    if (CaptureActions[j][0] == i && gameState.CurrentPosition[CaptureActions[j][1]] == 'G' && gameState.CurrentPosition[CaptureActions[j][2]] == 'E')
-                        score += 2;
-            }
-        }
-    }
-    return Score(score);
 }
 
 /*
@@ -629,116 +597,101 @@ function evaluate(gameState, actions, agentIndex) {
 ==================================================================================
 */
 
-function GameState() {
-    this.SideToPlay = 1; //0 == Tigers, 1 == Goats same as AgentIndex
-    this.OutsideGoats = 15;
-    //array of 23 elements corresponding to 23 squares of the board. Each square is either empty or has a goat or a tiger in it.
-    this.CurrentPosition = ['T', 'E', 'E', 'T', 'T', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'];
-    this.Hash = 0; // A compact representation of the game state. Hash is a 51 bit binary number.
-    this.Result = -1; // 0 == Tigers win, 1 == Goats Win, 2 == Draw, -1 == no result
-}
-//getLegalActions: returns a list of legal actions that can be taken from the current game state.
-GameState.prototype.getLegalActions = function () {
-    var actions = [];
-    if (this.SideToPlay == 1) {
-        if (this.OutsideGoats > 0) {
-            for (var i = 0; i < this.CurrentPosition.length; i++)
-                if (this.CurrentPosition[i] == 'E')
-                    actions.push([-1, -1, i]); // first value = from, second value = capture square, third value = to,  -1 means outside or no capture
-        }
-        else {
+class GameState {
+    constructor() {
+        this.SideToPlay = 1; //0 === Tigers, 1 === Goats same as AgentIndex
+        this.OutsideGoats = 15;
+        //array of 23 elements corresponding to 23 squares of the board. Each square is either empty or has a goat or a tiger in it.
+        this.CurrentPosition = ['T', 'E', 'E', 'T', 'T', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'];
+        this.Hash = 0; // A compact representation of the game state. Hash is a 51 bit binary number.
+        this.Result = -1; // 0 === Tigers win, 1 === Goats Win, 2 === Draw, -1 === no result
+    }
+
+    //getLegalActions: returns a list of legal actions that can be taken from the current game state.
+    getLegalActions() {
+        var actions = [];
+        if (this.SideToPlay === 1) {
+            if (this.OutsideGoats > 0) {
+                for (var i = 0; i < this.CurrentPosition.length; i++)
+                    if (this.CurrentPosition[i] === 'E')
+                        actions.push([-1, -1, i]); // first value = from, second value = capture square, third value = to,  -1 means outside or no capture
+            } else {
+                for (var i = 0; i < this.CurrentPosition.length; i++) {
+                    if (this.CurrentPosition[i] === 'G')
+                        for (var j = 0; j < MoveActions[i].length; j++)
+                            if (this.CurrentPosition[MoveActions[i][j]] === 'E')
+                                actions.push([i, -1, MoveActions[i][j]]);
+                }
+            }
+        } else {
             for (var i = 0; i < this.CurrentPosition.length; i++) {
-                if (this.CurrentPosition[i] == 'G')
+                if (this.CurrentPosition[i] === 'T') {
+                    for (var j = 0; j < CaptureActions.length; j++)
+                        if (CaptureActions[j][0] === i && this.CurrentPosition[CaptureActions[j][1]] === 'G' && this.CurrentPosition[CaptureActions[j][2]] === 'E')
+                            actions.push(CaptureActions[j]);
                     for (var j = 0; j < MoveActions[i].length; j++)
-                        if (this.CurrentPosition[MoveActions[i][j]] == 'E')
+                        if (this.CurrentPosition[MoveActions[i][j]] === 'E')
                             actions.push([i, -1, MoveActions[i][j]]);
+                }
             }
         }
+        return actions;
     }
-    else {
-        for (var i = 0; i < this.CurrentPosition.length; i++) {
-            if (this.CurrentPosition[i] == 'T') {
-                for (var j = 0; j < CaptureActions.length; j++)
-                    if (CaptureActions[j][0] == i && this.CurrentPosition[CaptureActions[j][1]] == 'G' && this.CurrentPosition[CaptureActions[j][2]] == 'E')
-                        actions.push(CaptureActions[j]);
-                for (var j = 0; j < MoveActions[i].length; j++)
-                    if (this.CurrentPosition[MoveActions[i][j]] == 'E')
-                        actions.push([i, -1, MoveActions[i][j]]);                
-            }
-        }
-    }
-    return actions;
-}
-//generateSuccessor: executes an action and then returns the successor state
-GameState.prototype.generateSuccessor = function (action, history) {
-    var state = new GameState();
-    state.OutsideGoats = this.OutsideGoats;
-    state.Result = this.Result;
-    state.SideToPlay = (this.SideToPlay + 1) % 2;
-    state.CurrentPosition = this.CurrentPosition.slice(0);
-    if (action == [0, 0, 0])
-        state.Result = state.SideToPlay;
-    else {
-        if (action[0] == -1) {
-            state.OutsideGoats -= 1;
-            state.CurrentPosition[action[2]] = 'G';
-        }
+
+    //generateSuccessor: executes an action and then returns the successor state
+    generateSuccessor(action, history) {
+        var state = new GameState();
+        state.OutsideGoats = this.OutsideGoats;
+        state.Result = this.Result;
+        state.SideToPlay = (this.SideToPlay + 1) % 2;
+        state.CurrentPosition = this.CurrentPosition.slice(0);
+        if (action === [0, 0, 0])
+            state.Result = state.SideToPlay;
         else {
-            var temp = state.CurrentPosition[action[0]];
-            state.CurrentPosition[action[0]] = 'E';
-            state.CurrentPosition[action[2]] = temp;
-            if (action[1] != -1)
-                state.CurrentPosition[action[1]] = 'E';
+            if (action[0] === -1) {
+                state.OutsideGoats -= 1;
+                state.CurrentPosition[action[2]] = 'G';
+            } else {
+                var temp = state.CurrentPosition[action[0]];
+                state.CurrentPosition[action[0]] = 'E';
+                state.CurrentPosition[action[2]] = temp;
+                if (action[1] != -1)
+                    state.CurrentPosition[action[1]] = 'E';
+            }
         }
-    }
-    var num = state.OutsideGoats;
-    for (var i = 0; i < state.CurrentPosition.length; i++)
-        if (state.CurrentPosition[i] == "G")
-            num += 1;
-    if (num == 0)
-        state.Result = 0;
-    else if (state.getLegalActions().length == 0)
-        state.Result = this.SideToPlay;
-    
-    //compute hash
-    state.Hash = 0;
-    for (var i = 0; i < state.CurrentPosition.length; i++) {
-        if (state.CurrentPosition[i] == 'T')
-            state.Hash += 2;
-        else if (state.CurrentPosition[i] == 'G')
-            state.Hash += 1;
+        var num = state.OutsideGoats;
+        for (var i = 0; i < state.CurrentPosition.length; i++)
+            if (state.CurrentPosition[i] === "G")
+                num += 1;
+        if (num === 0)
+            state.Result = 0;
+        else if (state.getLegalActions().length === 0)
+            state.Result = this.SideToPlay;
+
+        //compute hash
+        state.Hash = 0;
+        for (var i = 0; i < state.CurrentPosition.length; i++) {
+            if (state.CurrentPosition[i] === 'T')
+                state.Hash += 2;
+            else if (state.CurrentPosition[i] === 'G')
+                state.Hash += 1;
+            state.Hash *= 4;
+        }
         state.Hash *= 4;
-    }
-    state.Hash *= 4;
-    state.Hash += state.OutsideGoats;
-    state.Hash *= 2;
-    state.Hash += state.SideToPlay;
-    var numEquals = 0;
-    //outerloop:
-    //    for (var i = history.Pointer - 1; i >= 0; i--) {
-    //        if (history.InternalArray[i].OutsideGoats != state.OutsideGoats)
-    //            continue;
-    //        if (history.InternalArray[i].SideToPlay != state.SideToPlay)
-    //            continue;
-    //        for (var j = 0; j < history.InternalArray[i].CurrentPosition.length; j++) {
-    //            if (history.InternalArray[i].CurrentPosition[j] != state.CurrentPosition[j])
-    //                continue outerloop;
-    //        }
-    //        numEquals++;
-    //        if (numEquals > 1) {
-    //            state.Result = 2;
-    //            return state;
-    //        }
-    //    }
-    for (var i = history.Pointer - 1; i >= 0; i--) {
-        if (history.InternalArray[i].Hash === state.Hash)
-            numEquals++;
-        if (numEquals > 1) {
-            state.Result = 2;
-            return state;
+        state.Hash += state.OutsideGoats;
+        state.Hash *= 2;
+        state.Hash += state.SideToPlay;
+        var numEquals = 0;
+        for (var i = history.Pointer - 1; i >= 0; i--) {
+            if (history.InternalArray[i].Hash === state.Hash)
+                numEquals++;
+            if (numEquals > 1) {
+                state.Result = 2;
+                return state;
+            }
         }
+        return state;
     }
-    return state;
 }
 
 /*
@@ -747,7 +700,7 @@ GameState.prototype.generateSuccessor = function (action, history) {
 ==================================================================================
 */
 // MoveAction[0] = [2, 3, 4, 5] means that from square 0 we can go to sqaures 2, 3, 4 and 5
-MoveActions = [
+const MoveActions = [
     [2, 3, 4, 5],
     [2, 7],
     [0, 1, 3, 8],
@@ -773,7 +726,7 @@ MoveActions = [
     [17, 21]
 ];
 // [2, 2, 8] means that from square 0 a tiger can capture square 2 and land in square 8
-CaptureActions = [
+const CaptureActions = [
     [0, 2, 8],
     [0, 3, 9],
     [0, 4, 10],
@@ -848,8 +801,7 @@ Array.prototype.compare = function (array) {
             // recurse into the nested arrays
             if (!this[i].compare(array[i]))
                 return false;
-        }
-        else if (this[i] != array[i]) {
+        } else if (this[i] != array[i]) {
             // Warning - two different object instances will never be equal: {x:20} != {x:20}
             return false;
         }
@@ -857,50 +809,53 @@ Array.prototype.compare = function (array) {
     return true;
 }
 
-function HistoryStack(length) {
-    this.InternalArray = new Array(length);
-    this.Pointer = 0;
-}
-HistoryStack.prototype.push = function(obj) {
-    this.InternalArray[this.Pointer] = obj;
-    this.Pointer += 1;
-}
-HistoryStack.prototype.pop = function () {
-    this.Pointer -= 1;
+class HistoryStack {
+    constructor(length) {
+        this.InternalArray = new Array(length);
+        this.Pointer = 0;
+    }
+    push(obj) {
+        this.InternalArray[this.Pointer] = obj;
+        this.Pointer += 1;
+    }
+    pop() {
+        this.Pointer -= 1;
+    }
 }
 
-function HashTree() {
-    this.Nodes = new Array(256);
-    this.Data = null;
-}
-HashTree.prototype.find = function(key) {
-    function treeSearch(depth, key, node) {
-        var nextKey = key & 0xff;
-        if (depth == 1 && node.Nodes[key] != null) {
-            return node.Nodes[key].Data;
-        }
-        else if (node.Nodes[nextKey] != null) {
-            key = key - (key & 0xff);
-            return treeSearch(depth - 1, key / 256, node.Nodes[nextKey]);
-        }
-        return null;
+class HashTree {
+    constructor() {
+        this.Nodes = new Array(256);
+        this.Data = null;
+        this.depth = 7;
     }
-    return treeSearch(7, key, this);
-}
-HashTree.prototype.insert = function (key, data) {
-    function treeInsert(depth, key, data, node) {
-        if (depth == 1) {
-            node.Nodes[key] = new HashTree();
-            node.Nodes[key].Data = data;
-        }
-        else {
+    find(key) {
+        function treeSearch(depth, key, node) {
             var nextKey = key & 0xff;
-            if (node.Nodes[nextKey] == null) {
-                node.Nodes[nextKey] = new HashTree();
+            if (depth === 1 && node.Nodes[key] != null) {
+                return node.Nodes[key].Data;
+            } else if (node.Nodes[nextKey] != null) {
+                key = key - (key & 0xff);
+                return treeSearch(depth - 1, key / 256, node.Nodes[nextKey]);
             }
-            key = key - (key & 0xff);
-            treeInsert(depth - 1, key / 256, data, node.Nodes[nextKey]);
+            return null;
         }
+        return treeSearch(7, key, this);
     }
-    treeInsert(7, key, data, this);
+    insert(key, data) {
+        function treeInsert(depth, key, data, node) {
+            if (depth === 1) {
+                node.Nodes[key] = new HashTree();
+                node.Nodes[key].Data = data;
+            } else {
+                var nextKey = key & 0xff;
+                if (node.Nodes[nextKey] === null) {
+                    node.Nodes[nextKey] = new HashTree();
+                }
+                key = key - (key & 0xff);
+                treeInsert(depth - 1, key / 256, data, node.Nodes[nextKey]);
+            }
+        }
+        treeInsert(7, key, data, this);
+    }
 }
