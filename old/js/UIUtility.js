@@ -33,19 +33,13 @@
         else if (gameState.Result === 2) status.innerHTML = "Draw";
         else {
             status.innerHTML = "Stopped";
-            document.getElementById("TigersCurrentScore").innerHTML = "";
-            document.getElementById("TigersCurrentDepth").innerHTML = "";
-            document.getElementById("TigersCurrentAction").innerHTML = "";
+            const elements = ['CurrentScore', 'CurrentDepth', 'CurrentAction', 'NodesExpanded', 'LeafNodesReached'];
+            for (var i = 0; i < elements.length; i++) {
+                document.getElementById(`Tigers${elements[i]}`).innerHTML = '';
+                document.getElementById(`Goats${elements[i]}`).innerHTML = '';
+            }
             document.getElementById("TigersCurrentProgress").value = "";
-            document.getElementById("TigersNodesExpanded").innerHTML = "";
-            document.getElementById("TigersLeafNodesReached").innerHTML = "";
-
-            document.getElementById("GoatsCurrentScore").innerHTML = "";
-            document.getElementById("GoatsCurrentDepth").innerHTML = "";
-            document.getElementById("GoatsCurrentAction").innerHTML = "";
             document.getElementById("GoatsCurrentProgress").value = "";
-            document.getElementById("GoatsNodesExpanded").innerHTML = "";
-            document.getElementById("GoatsLeafNodesReached").innerHTML = "";
 
             document.getElementById("ComputerSide").disabled = false;
             document.getElementById("StartButton").disabled = false;
@@ -55,6 +49,7 @@
 }
 
 const ProcessUserInput = (element) => {
+    const elementId = parseInt(element.id);
     if (app.isInProgress === true && app.ComputerPlaysAs !== 2) {
         if (app.currentGameState.SideToPlay === 1 && app.computerPlaysAs === 0) {
             actions = app.currentGameState.getLegalActions();
@@ -64,13 +59,14 @@ const ProcessUserInput = (element) => {
             }
             if (app.currentGameState.OutsideGoats > 0) {
                 var isLegal = false;
-                for (var i = 0; i < actions.length; i++)
-                    if (actions[i].compare([-1, -1, element.id])) {
+                for (var i = 0; i < actions.length; i++) {
+                    if (actions[i].compare([-1, -1, elementId])) {
                         isLegal = true;
                         break;
                     }
+                }
                 if (isLegal) {
-                    app.currentGameState = app.currentGameState.generateSuccessor([-1, -1, element.id], app.MoveHistory);
+                    app.currentGameState = app.currentGameState.generateSuccessor([-1, -1, elementId], app.MoveHistory);
                     app.MoveHistory.push(app.currentGameState);
                     app.MoveHistory.InternalArray[app.MoveHistory.Pointer] = null;
                     updateUserInterface();
@@ -78,17 +74,18 @@ const ProcessUserInput = (element) => {
                 }
             } else {
                 if (element.class === "Goat")
-                    app.selectedId = element.id;
+                    app.selectedId = elementId;
                 else if (element.class === "Empty") {
                     if (app.selectedId > -1) {
                         var isLegal = false;
-                        for (var i = 0; i < actions.length; i++)
-                            if (actions[i].compare([app.selectedId, -1, element.id])) {
+                        for (var i = 0; i < actions.length; i++) {
+                            if (actions[i].compare([app.selectedId, -1, elementId])) {
                                 isLegal = true;
                                 break;
                             }
+                        }
                         if (isLegal) {
-                            app.currentGameState = app.currentGameState.generateSuccessor([app.selectedId, -1, element.id], app.MoveHistory);
+                            app.currentGameState = app.currentGameState.generateSuccessor([app.selectedId, -1, elementId], app.MoveHistory);
                             app.MoveHistory.push(app.currentGameState);
                             app.MoveHistory.InternalArray[app.MoveHistory.Pointer] = null;
                             updateUserInterface();
@@ -103,18 +100,19 @@ const ProcessUserInput = (element) => {
                 declareVictory();
                 return;
             }
-            if (element.class === "Tiger")
-                app.selectedId = element.id;
-            else if (element.class === "Empty") {
+            if (element.class === "Tiger") {
+                app.selectedId = elementId;
+            } else if (element.class === "Empty") {
                 if (app.selectedId > -1) {
                     var isLegal = false;
                     var action = [-1, -1, -1];
-                    for (var i = 0; i < actions.length; i++)
-                        if (actions[i][0] === app.selectedId && actions[i][2] === element.id) {
+                    for (var i = 0; i < actions.length; i++) {
+                        if (actions[i][0] === app.selectedId && actions[i][2] === elementId) {
                             isLegal = true;
                             action = actions[i];
                             break;
                         }
+                    }
                     if (isLegal) {
                         app.currentGameState = app.currentGameState.generateSuccessor(action, app.MoveHistory);
                         app.MoveHistory.push(app.currentGameState);
@@ -135,47 +133,36 @@ const declareVictory = () => {
 }
 
 const computerPlay = (agentIndex) => {
-    var agentName;
+    const side = agentIndex === 0 ? 'Tigers' : 'Goats';
+    const agentName = document.getElementById(`${side}Algorithm`).value;
+    const elements = {
+        currentScore: document.getElementById(`${side}CurrentScore`),
+        currentDepth: document.getElementById(`${side}CurrentDepth`),
+        currentAction: document.getElementById(`${side}CurrentAction`),
+        currentProgress: document.getElementById(`${side}CurrentProgress`),
+        depthLimit: Number(document.getElementById(`${side}Depth`).value),
+        nodesExpanded: document.getElementById(`${side}NodesExpanded`),
+        leafReached: document.getElementById(`${side}LeafNodesReached`),
+        timeLimit: Number(document.getElementById(`${side}Time`).value),
+    };
     app.AgentTerminated = false;
     document.getElementById("MoveNowButton").disabled = false;
-    var currentScore, currentDepth, currentAction, currentProgress, depthLimit, timeLimit, nodesExpanded, leafReached;
-    var output = document.getElementById("output");
-    if (agentIndex === 0) {
-        agentName = document.getElementById("TigersAlgorithm").options[document.getElementById("TigersAlgorithm").selectedIndex].value;
-        currentScore = document.getElementById("TigersCurrentScore");
-        currentDepth = document.getElementById("TigersCurrentDepth");
-        currentAction = document.getElementById("TigersCurrentAction");
-        currentProgress = document.getElementById("TigersCurrentProgress");
-        depthLimit = Number(document.getElementById("TigersDepth").value);
-        nodesExpanded = document.getElementById("TigersNodesExpanded");
-        leafReached = document.getElementById("TigersLeafNodesReached");
-        timeLimit = Number(document.getElementById("TigersTime").value);
-    } else {
-        agentName = document.getElementById("GoatsAlgorithm").options[document.getElementById("GoatsAlgorithm").selectedIndex].value;
-        currentScore = document.getElementById("GoatsCurrentScore");
-        currentDepth = document.getElementById("GoatsCurrentDepth");
-        currentAction = document.getElementById("GoatsCurrentAction");
-        nodesExpanded = document.getElementById("GoatsNodesExpanded");
-        leafReached = document.getElementById("GoatsLeafNodesReached");
-        currentProgress = document.getElementById("GoatsCurrentProgress");
-        depthLimit = Number(document.getElementById("GoatsDepth").value);
-        timeLimit = Number(document.getElementById("GoatsTime").value);
-    }
+    const output = document.getElementById("output");
     app.AgentWorker = new Worker('js/Engine.js');
-    currentProgress.value = 0;
+    elements.currentProgress.value = 0;
     app.AgentTimers = new Array(3);
-    var startTime = new Date().getTime() / 1000;
+    const startTime = new Date().getTime() / 1000;
     app.AgentWorker.onmessage = (e) => {
         if (app.AgentTerminated)
             return;
         app.AgentResult = e.data;
-        if (app.AgentResult[2] <= depthLimit) {
-            var time = new Date().getTime();
-            currentScore.innerHTML = app.AgentResult[0];
-            currentAction.innerHTML = app.AgentResult[1];
-            currentDepth.innerHTML = app.AgentResult[2];
-            nodesExpanded.innerHTML = app.AgentResult[3];
-            leafReached.innerHTML = app.AgentResult[4];
+        if (app.AgentResult[2] <= elements.depthLimit) {
+            const time = new Date().getTime();
+            elements.currentScore.innerHTML = app.AgentResult[0];
+            elements.currentAction.innerHTML = app.AgentResult[1];
+            elements.currentDepth.innerHTML = app.AgentResult[2];
+            elements.nodesExpanded.innerHTML = app.AgentResult[3];
+            elements.leafReached.innerHTML = app.AgentResult[4];
             output.innerHTML += "Agent: ";
             if (app.currentGameState.SideToPlay === 0)
                 output.innerHTML += "Tigers&#13;&#10;";
@@ -193,16 +180,16 @@ const computerPlay = (agentIndex) => {
             output.scrollTop = output.scrollHeight;
 
         }
-        if (app.AgentResult[2] >= depthLimit) {
+        if (app.AgentResult[2] >= elements.depthLimit) {
             app.AgentTerminated = true;
             app.AgentWorker.terminate();
         }
     }
     app.AgentTimers[0] = setInterval(() => {
         if (!app.AgentTerminated) {
-            if (app.AgentResult !== null) {
-                var value = Math.max(Number(app.AgentResult[2]) / depthLimit * 100, ((new Date().getTime() / 1000) - startTime) / timeLimit * 100);
-                currentProgress.value = value;
+            if (app.AgentResult) {
+                const value = Math.max(Number(app.AgentResult[2]) / elements.depthLimit * 100, ((new Date().getTime() / 1000) - startTime) / elements.timeLimit * 100);
+                elements.currentProgress.value = value;
             }
         }
     }, 1000);
@@ -211,15 +198,16 @@ const computerPlay = (agentIndex) => {
         if (!app.AgentTerminated) {
             app.AgentTerminated = true;
             app.AgentWorker.terminate();
-            currentProgress.value = 100;
+            elements.currentProgress.value = 100;
         }
-    }, timeLimit * 1000);
+    }, elements.timeLimit * 1000);
     app.AgentTimers[2] = setInterval(() => {
         if (app.AgentTerminated) {
-            for (var i = 0; i < app.AgentTimers.length; i++)
+            for (var i = 0; i < app.AgentTimers.length; i++) {
                 clearTimeout(app.AgentTimers[i]);
+            }
             if (app.isInProgress) {
-                if (app.AgentResult === null) {
+                if (!app.AgentResult) {
                     resetGame();
                     return;
                 }
@@ -275,8 +263,8 @@ const moveForward = () => {
         app.AgentTerminated = true;
         app.AgentWorker.terminate();
     }
-    var state = app.MoveHistory.InternalArray[app.MoveHistory.Pointer];
-    if (state !== null) {
+    const state = app.MoveHistory.InternalArray[app.MoveHistory.Pointer];
+    if (state) {
         app.currentGameState = state;
         app.MoveHistory.Pointer++;
     }
@@ -284,24 +272,24 @@ const moveForward = () => {
 }
 
 const ToggleGoats = (disabled) => {
-    document.getElementById("GoatsAlgorithm").disabled = disabled;
-    document.getElementById("GoatsTime").disabled = disabled;
-    document.getElementById("GoatsDepth").disabled = disabled;
-    document.getElementById("GoatsCurrentProgress").disabled = disabled;
+    const elements = ['Algorithm', 'Time', 'Depth', 'CurrentProgress'];
+    for (var i = 0; i < elements.length; i++) {
+        document.getElementById(`Goats${elements[i]}`).disabled = disabled;
+    }
 }
 
 const ToggleTigers = (disabled) => {
-    document.getElementById("TigersAlgorithm").disabled = disabled;
-    document.getElementById("TigersTime").disabled = disabled;
-    document.getElementById("TigersDepth").disabled = disabled;
-    document.getElementById("TigersCurrentProgress").disabled = disabled;
+    const elements = ['Algorithm', 'Time', 'Depth', 'CurrentProgress'];
+    for (var i = 0; i < elements.length; i++) {
+        document.getElementById(`Tigers${elements[i]}`).disabled = disabled;
+    }
 }
 
 const changeGameType = (element) => {
-    if (element.options[element.selectedIndex].value === "tigers") {
+    if (element.value === "tigers") {
         ToggleGoats(true);
         ToggleTigers(false);
-    } else if (element.options[element.selectedIndex].value === "goats") {
+    } else if (element.value === "goats") {
         ToggleGoats(false);
         ToggleTigers(true);
     } else {
@@ -312,14 +300,14 @@ const changeGameType = (element) => {
 
 const startGame = () => {
     app.isInProgress = true;
-    var cmpside = document.getElementById("ComputerSide");
+    const cmpside = document.getElementById("ComputerSide");
     cmpside.disabled = true;
-    if (cmpside.options[cmpside.selectedIndex].value === "goats") {
+    if (cmpside.value === "goats") {
         app.computerPlaysAs = 1;
         updateUserInterface();
         if (app.currentGameState.SideToPlay === app.computerPlaysAs)
             computerPlay(app.currentGameState.SideToPlay);
-    } else if (cmpside.options[cmpside.selectedIndex].value === "tigers") {
+    } else if (cmpside.value === "tigers") {
         app.computerPlaysAs = 0;
         updateUserInterface();
         if (app.currentGameState.SideToPlay === app.computerPlaysAs)
@@ -337,8 +325,9 @@ const resetGame = () => {
         app.AgentWorker.terminate();
     }
     if (app.AgentTimers) {
-        for (var i = 0; i < app.AgentTimers.length; i++)
+        for (var i = 0; i < app.AgentTimers.length; i++) {
             clearTimeout(app.AgentTimers[i]);
+        }
     }
     app.selectedId = -1;
     app.isInProgress = false;
