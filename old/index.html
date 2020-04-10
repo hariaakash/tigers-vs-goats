@@ -4,21 +4,7 @@
 <head>
 	<meta charset="utf-8" />
 	<title>Tigers and Goats</title>
-	<style>
-		.Goat {
-			width: 40px;
-			height: 40px;
-		}
-
-		.Goat:hover,
-		.Tiger:hover,
-		.Empty:hover {
-			background-color: gray;
-		}
-	</style>
-
-	<script src="./js/UIUtility.js"></script>
-	<script src="./js/TigersAndGoats.js"></script>
+	<link rel='stylesheet' href='./css/main.css'>
 	<script src="./js/app.js"></script>
 </head>
 
@@ -95,9 +81,10 @@
 								Game Type:
 								<select id="ComputerSide" onchange="changeGameType(this)">
 									<optgroup label="Computer plays as:">
-										<option value="tigers">Computer plays as tigers</option>
-										<option value="goats">Computer plays as goats</option>
-										<option value="computer">Computer vs Computer</option>
+										<option value="0">Computer plays as tigers</option>
+										<option value="1">Computer plays as goats</option>
+										<option value="2">Computer vs Computer</option>
+										<option value="3">Human vs Human</option>
 									</optgroup>
 								</select>
 								<br />

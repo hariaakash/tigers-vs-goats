@@ -661,7 +661,7 @@ class GameState {
         }
         var num = state.OutsideGoats;
         for (var i = 0; i < state.CurrentPosition.length; i++)
-            if (state.CurrentPosition[i] === "G")
+            if (state.CurrentPosition[i] === 'G')
                 num += 1;
         if (num === 0)
             state.Result = 0;

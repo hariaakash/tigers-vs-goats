@@ -1,57 +1,57 @@
 ﻿const updateUserInterface = () => {
-    const side = document.getElementById("SideToMove");
-    const outside = document.getElementById("OutSideGoats");
-    const status = document.getElementById("Status");
+    const side = document.getElementById('SideToMove');
+    const outside = document.getElementById('OutSideGoats');
+    const status = document.getElementById('Status');
     const gameState = app.currentGameState;
-    document.getElementById("MoveBackButton").disabled = (app.MoveHistory.Pointer < 2);
-    document.getElementById("MoveForwardButton").disabled = (app.MoveHistory.InternalArray[app.MoveHistory.Pointer] === null);
-    document.getElementById("MoveNowButton").disabled = app.currentGameState.SideToPlay !== app.ComputerPlaysAs;
+    document.getElementById('MoveBackButton').disabled = (app.MoveHistory.Pointer < 2);
+    document.getElementById('MoveForwardButton').disabled = (app.MoveHistory.InternalArray[app.MoveHistory.Pointer] === null);
+    document.getElementById('MoveNowButton').disabled = app.currentGameState.SideToPlay !== app.ComputerPlaysAs;
     app.selectedId = -1;
     for (var i = 0; i < gameState.CurrentPosition.length; i++) {
         const img = document.getElementById(i);
         if (gameState.CurrentPosition[i] === 'G') {
-            img.src = "images/Goat.png";
-            img.class = "Goat";
+            img.src = 'images/Goat.png';
+            img.class = 'Goat';
         } else if (gameState.CurrentPosition[i] === 'T') {
-            img.src = "images/Tiger.png";
-            img.class = "Tiger";
+            img.src = 'images/Tiger.png';
+            img.class = 'Tiger';
         } else {
-            img.src = "images/Empty.png";
-            img.class = "Empty";
+            img.src = 'images/Empty.png';
+            img.class = 'Empty';
         }
     }
     outside.innerHTML = gameState.OutsideGoats;
     side.innerHTML = gameState.SideToPlay === 0 ? '🐅 Tigers' : '🐐 Goats';
     if (gameState.Result === -1 && app.isInProgress) {
-        status.innerHTML = "In Progress";
-        document.getElementById("StopButton").disabled = false;
-        document.getElementById("StartButton").disabled = true;
+        status.innerHTML = 'In Progress';
+        document.getElementById('StopButton').disabled = false;
+        document.getElementById('StartButton').disabled = true;
     } else {
-        document.getElementById("StartButton").disabled = true;
-        if (gameState.Result === 0) status.innerHTML = "🐅 Tigers Win!";
-        else if (gameState.Result === 1) status.innerHTML = "🐐 Goats Win!";
-        else if (gameState.Result === 2) status.innerHTML = "Draw";
+        document.getElementById('StartButton').disabled = true;
+        if (gameState.Result === 0) status.innerHTML = '🐅 Tigers Win!';
+        else if (gameState.Result === 1) status.innerHTML = '🐐 Goats Win!';
+        else if (gameState.Result === 2) status.innerHTML = 'Draw';
         else {
-            status.innerHTML = "Stopped";
+            status.innerHTML = 'Stopped';
             const elements = ['CurrentScore', 'CurrentDepth', 'CurrentAction', 'NodesExpanded', 'LeafNodesReached'];
             for (var i = 0; i < elements.length; i++) {
                 document.getElementById(`Tigers${elements[i]}`).innerHTML = '';
                 document.getElementById(`Goats${elements[i]}`).innerHTML = '';
             }
-            document.getElementById("TigersCurrentProgress").value = "";
-            document.getElementById("GoatsCurrentProgress").value = "";
+            document.getElementById('TigersCurrentProgress').value = '';
+            document.getElementById('GoatsCurrentProgress').value = '';
 
-            document.getElementById("ComputerSide").disabled = false;
-            document.getElementById("StartButton").disabled = false;
+            document.getElementById('ComputerSide').disabled = false;
+            document.getElementById('StartButton').disabled = false;
         }
-        document.getElementById("StopButton").disabled = true;
+        document.getElementById('StopButton').disabled = true;
     }
 }
 
 const ProcessUserInput = (element) => {
     const elementId = parseInt(element.id);
     if (app.isInProgress === true && app.ComputerPlaysAs !== 2) {
-        if (app.currentGameState.SideToPlay === 1 && app.computerPlaysAs === 0) {
+        if (app.currentGameState.SideToPlay === 1 && [0, 3].includes(app.computerPlaysAs)) {
             actions = app.currentGameState.getLegalActions();
             if (actions.length === 0) {
                 declareVictory();
@@ -70,12 +70,12 @@ const ProcessUserInput = (element) => {
                     app.MoveHistory.push(app.currentGameState);
                     app.MoveHistory.InternalArray[app.MoveHistory.Pointer] = null;
                     updateUserInterface();
-                    setTimeout(() => computerPlay(0), 500);
+                    if (app.computerPlaysAs !== 3) setTimeout(() => computerPlay(0), 500);
                 }
             } else {
-                if (element.class === "Goat")
+                if (element.class === 'Goat')
                     app.selectedId = elementId;
-                else if (element.class === "Empty") {
+                else if (element.class === 'Empty') {
                     if (app.selectedId > -1) {
                         var isLegal = false;
                         for (var i = 0; i < actions.length; i++) {
@@ -89,20 +89,20 @@ const ProcessUserInput = (element) => {
                             app.MoveHistory.push(app.currentGameState);
                             app.MoveHistory.InternalArray[app.MoveHistory.Pointer] = null;
                             updateUserInterface();
-                            setTimeout(() => computerPlay(0), 500);
+                            if (app.computerPlaysAs !== 3) setTimeout(() => computerPlay(0), 500);
                         }
                     }
                 }
             }
-        } else if (app.currentGameState.SideToPlay === 0 && app.computerPlaysAs === 1) {
+        } else if (app.currentGameState.SideToPlay === 0 && [1, 3].includes(app.computerPlaysAs)) {
             actions = app.currentGameState.getLegalActions();
             if (actions.length === 0) {
                 declareVictory();
                 return;
             }
-            if (element.class === "Tiger") {
+            if (element.class === 'Tiger') {
                 app.selectedId = elementId;
-            } else if (element.class === "Empty") {
+            } else if (element.class === 'Empty') {
                 if (app.selectedId > -1) {
                     var isLegal = false;
                     var action = [-1, -1, -1];
@@ -118,7 +118,7 @@ const ProcessUserInput = (element) => {
                         app.MoveHistory.push(app.currentGameState);
                         app.MoveHistory.InternalArray[app.MoveHistory.Pointer] = null;
                         updateUserInterface();
-                        setTimeout(() => computerPlay(1), 500);
+                        if (app.computerPlaysAs !== 3) setTimeout(() => computerPlay(1), 500);
                     }
                 }
             }
@@ -140,15 +140,15 @@ const computerPlay = (agentIndex) => {
         currentDepth: document.getElementById(`${side}CurrentDepth`),
         currentAction: document.getElementById(`${side}CurrentAction`),
         currentProgress: document.getElementById(`${side}CurrentProgress`),
-        depthLimit: Number(document.getElementById(`${side}Depth`).value),
         nodesExpanded: document.getElementById(`${side}NodesExpanded`),
         leafReached: document.getElementById(`${side}LeafNodesReached`),
         timeLimit: Number(document.getElementById(`${side}Time`).value),
+        depthLimit: Number(document.getElementById(`${side}Depth`).value),
     };
     app.AgentTerminated = false;
-    document.getElementById("MoveNowButton").disabled = false;
-    const output = document.getElementById("output");
-    app.AgentWorker = new Worker('js/Engine.js');
+    document.getElementById('MoveNowButton').disabled = false;
+    const output = document.getElementById('output');
+    app.AgentWorker = new Worker('./js/engine.js');
     elements.currentProgress.value = 0;
     app.AgentTimers = new Array(3);
     const startTime = new Date().getTime() / 1000;
@@ -163,18 +163,18 @@ const computerPlay = (agentIndex) => {
             elements.currentDepth.innerHTML = app.AgentResult[2];
             elements.nodesExpanded.innerHTML = app.AgentResult[3];
             elements.leafReached.innerHTML = app.AgentResult[4];
-            output.innerHTML += "Agent: ";
+            output.innerHTML += 'Agent: ';
             if (app.currentGameState.SideToPlay === 0)
-                output.innerHTML += "Tigers&#13;&#10;";
-            else output.innerHTML += "Goats&#13;&#10;";
-            output.innerHTML += "Algorithm: " + agentName + "&#13;&#10;";
-            output.innerHTML += "Depth: " + app.AgentResult[2] + "&#13;&#10;";
-            output.innerHTML += "Score: " + app.AgentResult[0] + "&#13;&#10;";
-            output.innerHTML += "Action: " + app.AgentResult[1] + "&#13;&#10;";
-            output.innerHTML += "Nodes Expanded: " + app.AgentResult[3] + "&#13;&#10;";
-            output.innerHTML += "Leaf Nodes Reached: " + app.AgentResult[4] + "&#13;&#10;";
-            output.innerHTML += "Time: " + (time - startTime * 1000) + " ms&#13;&#10;";
-            output.innerHTML += "---------------------------------------&#13;&#10;";
+                output.innerHTML += 'Tigers&#13;&#10;';
+            else output.innerHTML += 'Goats&#13;&#10;';
+            output.innerHTML += 'Algorithm: ' + agentName + '&#13;&#10;';
+            output.innerHTML += 'Depth: ' + app.AgentResult[2] + '&#13;&#10;';
+            output.innerHTML += 'Score: ' + app.AgentResult[0] + '&#13;&#10;';
+            output.innerHTML += 'Action: ' + app.AgentResult[1] + '&#13;&#10;';
+            output.innerHTML += 'Nodes Expanded: ' + app.AgentResult[3] + '&#13;&#10;';
+            output.innerHTML += 'Leaf Nodes Reached: ' + app.AgentResult[4] + '&#13;&#10;';
+            output.innerHTML += 'Time: ' + (time - startTime * 1000) + ' ms&#13;&#10;';
+            output.innerHTML += '---------------------------------------&#13;&#10;';
             if (output.innerHTML.length > 4000)
                 output.innerHTML = output.innerHTML.slice(output.innerHTML.length - 3000, output.innerHTML.length - 1);
             output.scrollTop = output.scrollHeight;
@@ -219,7 +219,7 @@ const computerPlay = (agentIndex) => {
                     app.AgentTerminated = true;
                     app.AgentWorker.terminate();
                 }
-                document.getElementById("MoveNowButton").disabled = true;
+                document.getElementById('MoveNowButton').disabled = true;
             }
             updateUserInterface();
             if (app.isInProgress && app.computerPlaysAs === 2)
@@ -228,28 +228,24 @@ const computerPlay = (agentIndex) => {
     }, 300);
 }
 
-const moveNow = () => {
-    if (!app.AgentTerminated) {
+const terminateAgent = (force = false) => {
+    if (!app.AgentTerminated || force) {
         app.AgentTerminated = true;
-        app.AgentWorker.terminate();
+        if (app.AgentWorker) app.AgentWorker.terminate();
     }
-}
+};
+
+const moveNow = () => terminateAgent();
 
 const stopGame = () => {
     app.isInProgress = false;
-    if (!app.AgentTerminated) {
-        app.AgentTerminated = true;
-        app.AgentWorker.terminate();
-    }
+    terminateAgent();
     updateUserInterface();
 }
 
 const moveBack = () => {
     app.isInProgress = false;
-    if (!app.AgentTerminated) {
-        app.AgentTerminated = true;
-        app.AgentWorker.terminate();
-    }
+    terminateAgent();
     if (app.MoveHistory.Pointer > 1) {
         app.currentGameState = app.MoveHistory.InternalArray[app.MoveHistory.Pointer - 2];
         app.MoveHistory.Pointer--;
@@ -259,10 +255,7 @@ const moveBack = () => {
 
 const moveForward = () => {
     app.isInProgress = false;
-    if (!app.AgentTerminated) {
-        app.AgentTerminated = true;
-        app.AgentWorker.terminate();
-    }
+    terminateAgent();
     const state = app.MoveHistory.InternalArray[app.MoveHistory.Pointer];
     if (state) {
         app.currentGameState = state;
@@ -271,73 +264,53 @@ const moveForward = () => {
     updateUserInterface();
 }
 
-const ToggleGoats = (disabled) => {
+const toggleSide = (side, disabled) => {
     const elements = ['Algorithm', 'Time', 'Depth', 'CurrentProgress'];
     for (var i = 0; i < elements.length; i++) {
-        document.getElementById(`Goats${elements[i]}`).disabled = disabled;
-    }
-}
-
-const ToggleTigers = (disabled) => {
-    const elements = ['Algorithm', 'Time', 'Depth', 'CurrentProgress'];
-    for (var i = 0; i < elements.length; i++) {
-        document.getElementById(`Tigers${elements[i]}`).disabled = disabled;
+        document.getElementById(`${side}${elements[i]}`).disabled = disabled;
     }
 }
 
 const changeGameType = (element) => {
-    if (element.value === "tigers") {
-        ToggleGoats(true);
-        ToggleTigers(false);
-    } else if (element.value === "goats") {
-        ToggleGoats(false);
-        ToggleTigers(true);
+    if (element.value === 'tigers') {
+        toggleSide('Goats', true);
+        toggleSide('Tigers', false);
+    } else if (element.value === 'goats') {
+        toggleSide('Goats', false);
+        toggleSide('Tigers', true);
     } else {
-        ToggleGoats(false);
-        ToggleTigers(false);
+        toggleSide('Goats', false);
+        toggleSide('Tigers', false);
     }
 }
 
+// 0 = Computer plays as tigers
+// 1 = Computer plays as goats
+// 2 = Computer vs Computer
+// 3 = Human vs Human
 const startGame = () => {
     app.isInProgress = true;
-    const cmpside = document.getElementById("ComputerSide");
+    const cmpside = document.getElementById('ComputerSide');
     cmpside.disabled = true;
-    if (cmpside.value === "goats") {
-        app.computerPlaysAs = 1;
-        updateUserInterface();
-        if (app.currentGameState.SideToPlay === app.computerPlaysAs)
-            computerPlay(app.currentGameState.SideToPlay);
-    } else if (cmpside.value === "tigers") {
-        app.computerPlaysAs = 0;
-        updateUserInterface();
-        if (app.currentGameState.SideToPlay === app.computerPlaysAs)
-            computerPlay(app.currentGameState.SideToPlay);
-    } else {
-        app.computerPlaysAs = 2;
-        updateUserInterface();
+    app.computerPlaysAs = parseInt(cmpside.value);
+    updateUserInterface();
+    if (app.currentGameState.SideToPlay === app.computerPlaysAs || app.computerPlaysAs == 2)
         computerPlay(app.currentGameState.SideToPlay);
-    }
 }
 
 const resetGame = () => {
-    if (app.AgentWorker) {
-        app.AgentTerminated = true;
-        app.AgentWorker.terminate();
-    }
+    terminateAgent(true);
     if (app.AgentTimers) {
         for (var i = 0; i < app.AgentTimers.length; i++) {
             clearTimeout(app.AgentTimers[i]);
         }
     }
-    app.selectedId = -1;
-    app.isInProgress = false;
-    app.currentGameState = new GameState();
-    app.MoveHistory = new HistoryStack(500);
-    document.getElementById("StartButton").disabled = false;
-    document.getElementById("output").innerHTML = "";
-    document.getElementById("TigersDepth").value = Number(document.getElementById("TigersDepth").max);
-    document.getElementById("TigersTime").value = Number(document.getElementById("TigersTime").min);
-    document.getElementById("GoatsDepth").value = Number(document.getElementById("GoatsDepth").max);
-    document.getElementById("GoatsTime").value = Number(document.getElementById("GoatsTime").min);
+    init();
+    document.getElementById('StartButton').disabled = false;
+    document.getElementById('output').innerHTML = '';
+    document.getElementById('TigersDepth').value = Number(document.getElementById('TigersDepth').max);
+    document.getElementById('TigersTime').value = Number(document.getElementById('TigersTime').min);
+    document.getElementById('GoatsDepth').value = Number(document.getElementById('GoatsDepth').max);
+    document.getElementById('GoatsTime').value = Number(document.getElementById('GoatsTime').min);
     updateUserInterface();
 }

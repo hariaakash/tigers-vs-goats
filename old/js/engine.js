@@ -1,28 +1,28 @@
-﻿importScripts('TigersAndGoats.js');
+﻿importScripts('classes.js');
 
 self.onmessage = (e) => {
     var AgentName = e.data[1];
     var agent;
     switch (AgentName.toLowerCase()) {
-        case "minimax":
+        case 'minimax':
             agent = new minimaxAgent();
             break;
-        case "alphabeta":
+        case 'alphabeta':
             agent = new alphaBetaAgent();
             break;
-        case "expectimax":
+        case 'expectimax':
             agent = new expectimaxAgent();
             break;
-        case "scout":
+        case 'scout':
             agent = new scoutAgent();
             break;
-        case "alphabetawithmemory":
+        case 'alphabetawithmemory':
             agent = new alphaBetaWithTTAgent();
             break;
-        case "scoutwithttagent":
+        case 'scoutwithttagent':
             agent = new scoutWithTTAgent();
             break;
-        case "mtdfagent":
+        case 'mtdfagent':
             agent = new mtdfAgent();
             break;
     }
