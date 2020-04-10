@@ -130,7 +130,7 @@ class minimaxAgent extends Agent {
         var depth = 1;
         while (true) {
             const result = this.minimax(gameState, depth, this.Index, data);
-            postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result = score, action, depth, nodesExpanded
+            postMessage([result[0], result[1], depth, data.nodesExpanded, data.leavesReached]); //result = score, action, depth, nodesExpanded
             depth++;
         }
     }
@@ -139,10 +139,10 @@ class minimaxAgent extends Agent {
         var actions = state.getLegalActions();
         var action = [0, 0, 0];
         var score;
-        if (data.depth < 1 || actions.length === 0 || state.Result != -1) {
+        if (depth < 1 || actions.length === 0 || state.Result !== -1) {
             data.history.pop();
             data.leavesReached++;
-            return [super.evaluate(state, actions, index), [0, 0, 0]];
+            return [this.evaluate(state, actions, data.index), [0, 0, 0]];
         } else if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
@@ -182,7 +182,7 @@ class alphaBetaAgent extends Agent {
         var depth = 1;
         while (true) {
             const result = this.alphaBeta(gameState, depth, this.Index, data, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
-            postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
+            postMessage([result[0], result[1], depth, data.nodesExpanded, data.leavesReached]); //result: score, action, depth, nodesExpanded
             depth++;
         }
     }
@@ -194,12 +194,12 @@ class alphaBetaAgent extends Agent {
         if (depth < 1 || actions.length === 0 || state.Result != -1) {
             data.history.pop();
             data.leavesReached++;
-            return [evaluate(state, actions, index), [0, 0, 0]];
+            return [this.evaluate(state, actions, data.index), [0, 0, 0]];
         } else if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = this.alphaBeta(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, data, a, b)[0];
+                result = this.alphaBeta(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, a, b)[0];
                 data.nodesExpanded++;
                 if (score < result) {
                     score = result;
@@ -214,7 +214,7 @@ class alphaBetaAgent extends Agent {
             score = Number.POSITIVE_INFINITY;
             var result;
             for (var i = 0; i < actions.length; i++) {
-                result = this.alphaBeta(state.generateSuccessor(actions[i], history), depth - 1, (agentIndex + 1) % 2, data, a, b)[0];
+                result = this.alphaBeta(state.generateSuccessor(actions[i], data.history), depth - 1, (agentIndex + 1) % 2, data, a, b)[0];
                 data.nodesExpanded++;
                 if (score > result) {
                     action = actions[i];
@@ -242,7 +242,7 @@ class scoutAgent extends Agent {
         var depth = 1;
         while (true) {
             const result = this.scout(gameState, depth, this.Index, data, Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
-            postMessage([result[0], result[1], depth, nodesExpanded, leavesReached]); //result: score, action, depth, nodesExpanded
+            postMessage([result[0], result[1], depth, data.nodesExpanded, data.leavesReached]); //result: score, action, depth, nodesExpanded
             depth++;
         }
     }
@@ -254,7 +254,7 @@ class scoutAgent extends Agent {
         if (depth < 1 || actions.length === 0 || state.Result != -1) {
             data.history.pop();
             data.leavesReached++;
-            return [evaluate(state, actions, data.index), [0, 0, 0]];
+            return [this.evaluate(state, actions, data.index), [0, 0, 0]];
         } else if (agentIndex === data.index) {
             score = Number.NEGATIVE_INFINITY;
             var result;
@@ -827,35 +827,34 @@ class HashTree {
     constructor() {
         this.Nodes = new Array(256);
         this.Data = null;
-        this.depth = 7;
     }
     find(key) {
-        function treeSearch(depth, key, node) {
-            var nextKey = key & 0xff;
-            if (depth === 1 && node.Nodes[key] != null) {
-                return node.Nodes[key].Data;
-            } else if (node.Nodes[nextKey] != null) {
-                key = key - (key & 0xff);
-                return treeSearch(depth - 1, key / 256, node.Nodes[nextKey]);
-            }
-            return null;
+        return this.treeSearch(7, key, this.Nodes);
+    }
+    treeSearch(depth, key, Nodes) {
+        var nextKey = key & 0xff;
+        if (depth === 1 && Nodes[key]) {
+            return Nodes[key].Data;
+        } else if (Nodes[nextKey]) {
+            key = key - (key & 0xff);
+            return this.treeSearch(depth - 1, key / 256, Nodes[nextKey]);
         }
-        return treeSearch(7, key, this);
+        return null;
     }
     insert(key, data) {
-        function treeInsert(depth, key, data, node) {
-            if (depth === 1) {
-                node.Nodes[key] = new HashTree();
-                node.Nodes[key].Data = data;
-            } else {
-                var nextKey = key & 0xff;
-                if (node.Nodes[nextKey] === null) {
-                    node.Nodes[nextKey] = new HashTree();
-                }
-                key = key - (key & 0xff);
-                treeInsert(depth - 1, key / 256, data, node.Nodes[nextKey]);
+        this.treeInsert(7, key, data, this.Nodes);
+    }
+    treeInsert(depth, key, data, Nodes) {
+        if (depth === 1) {
+            Nodes[key] = new HashTree();
+            Nodes[key].Data = data;
+        } else {
+            var nextKey = key & 0xff;
+            if (!Nodes[nextKey]) {
+                Nodes[nextKey] = new HashTree();
             }
+            key = key - (key & 0xff);
+            this.treeInsert(depth - 1, key / 256, data, Nodes[nextKey]);
         }
-        treeInsert(7, key, data, this);
     }
 }

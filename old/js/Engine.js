@@ -1,6 +1,6 @@
 ﻿importScripts('TigersAndGoats.js');
 
-self.onmessage = function (e) {
+self.onmessage = (e) => {
     var AgentName = e.data[1];
     var agent;
     switch (AgentName.toLowerCase()) {
@@ -32,12 +32,13 @@ self.onmessage = function (e) {
         agent.History.push(createGameState(e.data[3].InternalArray[i]));
     agent.getAction(createGameState(e.data[0]));
 }
-function createGameState(json) {
+
+const createGameState = (data) => {
     var gameState = new GameState();
-    gameState.SideToPlay = json.SideToPlay;
-    gameState.CurrentPosition = json.CurrentPosition.slice(0);
-    gameState.OutsideGoats = json.OutsideGoats;
-    gameState.Result = json.Result;
-    gameState.Hash = json.Hash;
+    gameState.SideToPlay = data.SideToPlay;
+    gameState.CurrentPosition = data.CurrentPosition.slice(0);
+    gameState.OutsideGoats = data.OutsideGoats;
+    gameState.Result = data.Result;
+    gameState.Hash = data.Hash;
     return gameState;
 }

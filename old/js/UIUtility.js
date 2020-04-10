@@ -1,4 +1,4 @@
-﻿function updateUserInterface() {
+﻿const updateUserInterface = () => {
     const side = document.getElementById("SideToMove");
     const outside = document.getElementById("OutSideGoats");
     const status = document.getElementById("Status");
@@ -54,7 +54,7 @@
     }
 }
 
-function ProcessUserInput(element) {
+const ProcessUserInput = (element) => {
     if (app.isInProgress === true && app.ComputerPlaysAs !== 2) {
         if (app.currentGameState.SideToPlay === 1 && app.computerPlaysAs === 0) {
             actions = app.currentGameState.getLegalActions();
@@ -73,10 +73,8 @@ function ProcessUserInput(element) {
                     app.currentGameState = app.currentGameState.generateSuccessor([-1, -1, element.id], app.MoveHistory);
                     app.MoveHistory.push(app.currentGameState);
                     app.MoveHistory.InternalArray[app.MoveHistory.Pointer] = null;
-                    updateUserInterface(app.currentGameState);
-                    setTimeout(function () {
-                        computerPlay(0)
-                    }, 500);
+                    updateUserInterface();
+                    setTimeout(() => computerPlay(0), 500);
                 }
             } else {
                 if (element.class === "Goat")
@@ -93,10 +91,8 @@ function ProcessUserInput(element) {
                             app.currentGameState = app.currentGameState.generateSuccessor([app.selectedId, -1, element.id], app.MoveHistory);
                             app.MoveHistory.push(app.currentGameState);
                             app.MoveHistory.InternalArray[app.MoveHistory.Pointer] = null;
-                            updateUserInterface(app.currentGameState);
-                            setTimeout(function () {
-                                computerPlay(0)
-                            }, 500);
+                            updateUserInterface();
+                            setTimeout(() => computerPlay(0), 500);
                         }
                     }
                 }
@@ -123,25 +119,22 @@ function ProcessUserInput(element) {
                         app.currentGameState = app.currentGameState.generateSuccessor(action, app.MoveHistory);
                         app.MoveHistory.push(app.currentGameState);
                         app.MoveHistory.InternalArray[app.MoveHistory.Pointer] = null;
-                        updateUserInterface(app.currentGameState);
-                        setTimeout(function () {
-                            computerPlay(1)
-                        }, 500);
+                        updateUserInterface();
+                        setTimeout(() => computerPlay(1), 500);
                     }
                 }
             }
 
         }
     }
-
-    function declareVictory() {
-        app.isInProgress = false;
-        //app.currentGameState.Result = (app.currentGameState.SideToPlay + 1) % 2;
-        updateUserInterface();
-    }
 }
 
-function computerPlay(agentIndex) {
+const declareVictory = () => {
+    app.isInProgress = false;
+    updateUserInterface();
+}
+
+const computerPlay = (agentIndex) => {
     var agentName;
     app.AgentTerminated = false;
     document.getElementById("MoveNowButton").disabled = false;
@@ -172,7 +165,7 @@ function computerPlay(agentIndex) {
     currentProgress.value = 0;
     app.AgentTimers = new Array(3);
     var startTime = new Date().getTime() / 1000;
-    app.AgentWorker.onmessage = function (e) {
+    app.AgentWorker.onmessage = (e) => {
         if (app.AgentTerminated)
             return;
         app.AgentResult = e.data;
@@ -205,7 +198,7 @@ function computerPlay(agentIndex) {
             app.AgentWorker.terminate();
         }
     }
-    app.AgentTimers[0] = setInterval(function () {
+    app.AgentTimers[0] = setInterval(() => {
         if (!app.AgentTerminated) {
             if (app.AgentResult !== null) {
                 var value = Math.max(Number(app.AgentResult[2]) / depthLimit * 100, ((new Date().getTime() / 1000) - startTime) / timeLimit * 100);
@@ -214,14 +207,14 @@ function computerPlay(agentIndex) {
         }
     }, 1000);
     app.AgentWorker.postMessage([app.currentGameState, agentName, agentIndex, app.MoveHistory]);
-    app.AgentTimers[1] = setTimeout(function () {
+    app.AgentTimers[1] = setTimeout(() => {
         if (!app.AgentTerminated) {
             app.AgentTerminated = true;
             app.AgentWorker.terminate();
             currentProgress.value = 100;
         }
     }, timeLimit * 1000);
-    app.AgentTimers[2] = setInterval(function () {
+    app.AgentTimers[2] = setInterval(() => {
         if (app.AgentTerminated) {
             for (var i = 0; i < app.AgentTimers.length; i++)
                 clearTimeout(app.AgentTimers[i]);
@@ -247,14 +240,14 @@ function computerPlay(agentIndex) {
     }, 300);
 }
 
-function moveNow() {
+const moveNow = () => {
     if (!app.AgentTerminated) {
         app.AgentTerminated = true;
         app.AgentWorker.terminate();
     }
 }
 
-function stopGame() {
+const stopGame = () => {
     app.isInProgress = false;
     if (!app.AgentTerminated) {
         app.AgentTerminated = true;
@@ -263,7 +256,7 @@ function stopGame() {
     updateUserInterface();
 }
 
-function moveBack() {
+const moveBack = () => {
     app.isInProgress = false;
     if (!app.AgentTerminated) {
         app.AgentTerminated = true;
@@ -276,7 +269,7 @@ function moveBack() {
     updateUserInterface();
 }
 
-function moveForward() {
+const moveForward = () => {
     app.isInProgress = false;
     if (!app.AgentTerminated) {
         app.AgentTerminated = true;
@@ -290,21 +283,21 @@ function moveForward() {
     updateUserInterface();
 }
 
-function ToggleGoats(disabled) {
+const ToggleGoats = (disabled) => {
     document.getElementById("GoatsAlgorithm").disabled = disabled;
     document.getElementById("GoatsTime").disabled = disabled;
     document.getElementById("GoatsDepth").disabled = disabled;
     document.getElementById("GoatsCurrentProgress").disabled = disabled;
 }
 
-function ToggleTigers(disabled) {
+const ToggleTigers = (disabled) => {
     document.getElementById("TigersAlgorithm").disabled = disabled;
     document.getElementById("TigersTime").disabled = disabled;
     document.getElementById("TigersDepth").disabled = disabled;
     document.getElementById("TigersCurrentProgress").disabled = disabled;
 }
 
-function changeGameType(element) {
+const changeGameType = (element) => {
     if (element.options[element.selectedIndex].value === "tigers") {
         ToggleGoats(true);
         ToggleTigers(false);
@@ -317,7 +310,7 @@ function changeGameType(element) {
     }
 }
 
-function startGame() {
+const startGame = () => {
     app.isInProgress = true;
     var cmpside = document.getElementById("ComputerSide");
     cmpside.disabled = true;
@@ -338,26 +331,24 @@ function startGame() {
     }
 }
 
-function resetGame() {
-    setTimeout(function () {
-        if (app.AgentWorker !== null) {
-            app.AgentTerminated = true;
-            app.AgentWorker.terminate();
-        }
-        if (app.AgentTimers !== null) {
-            for (var i = 0; i < app.AgentTimers.length; i++)
-                clearTimeout(app.AgentTimers[i]);
-        }
-        app.selectedId = -1;
-        app.isInProgress = false;
-        app.currentGameState = new GameState();
-        app.MoveHistory = new HistoryStack(500);
-        document.getElementById("StartButton").disabled = false;
-        document.getElementById("output").innerHTML = "";
-        document.getElementById("TigersDepth").value = Number(document.getElementById("TigersDepth").max);
-        document.getElementById("TigersTime").value = Number(document.getElementById("TigersTime").min);
-        document.getElementById("GoatsDepth").value = Number(document.getElementById("GoatsDepth").max);
-        document.getElementById("GoatsTime").value = Number(document.getElementById("GoatsTime").min);
-        updateUserInterface();
-    }, 0);
+const resetGame = () => {
+    if (app.AgentWorker) {
+        app.AgentTerminated = true;
+        app.AgentWorker.terminate();
+    }
+    if (app.AgentTimers) {
+        for (var i = 0; i < app.AgentTimers.length; i++)
+            clearTimeout(app.AgentTimers[i]);
+    }
+    app.selectedId = -1;
+    app.isInProgress = false;
+    app.currentGameState = new GameState();
+    app.MoveHistory = new HistoryStack(500);
+    document.getElementById("StartButton").disabled = false;
+    document.getElementById("output").innerHTML = "";
+    document.getElementById("TigersDepth").value = Number(document.getElementById("TigersDepth").max);
+    document.getElementById("TigersTime").value = Number(document.getElementById("TigersTime").min);
+    document.getElementById("GoatsDepth").value = Number(document.getElementById("GoatsDepth").max);
+    document.getElementById("GoatsTime").value = Number(document.getElementById("GoatsTime").min);
+    updateUserInterface();
 }
