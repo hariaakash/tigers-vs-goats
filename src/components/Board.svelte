@@ -5,14 +5,26 @@
 
 	import positions from '../static/boardPositions';
 
-	const app = {};
+
+	import {
+		processUserInput,
+	} from '.././helpers/utilities.js';
+
 	const imageSize = 8;
 	const goat = './img/goat.svg';
 	const tiger = './img/tiger.svg';
+	const empty = './img/empty.png';
 
 	onMount(async () => {
 		const board = document.getElementById('board');
 	});
+	const callProcessHandler = (event) => {
+		const element = {
+			id: parseInt(event.target.id.replace('i', '')),
+			class: event.target.className.baseVal
+		};
+		processUserInput(element);
+	}
 </script>
 
 <style>
@@ -53,13 +65,14 @@
 					<circle id="c{key}" cx="{position.cx}" cy="{position.cy}" r="2" class="circle" />
 					<text id="t{key}" x="{position.cx}" y="{position.cy}" alignment-baseline="central" class="marker">{key}</text>
 					<image
+						on:click="{callProcessHandler}"
 						id="i{key}"
-						href="{ key%2 === 0 ? tiger : goat}"
+						href="{empty}"
 						x="{position.cx - imageSize/2}"
 						y="{position.cy - imageSize/2}"
 						height="{imageSize}"
 						width="{imageSize}"
-						alt="Position {key}"
+						class="empty"
 					/>
 				</g>
 			{/each}
