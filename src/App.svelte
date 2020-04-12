@@ -1,28 +1,19 @@
 <script>
-	import {
-		onMount
-	} from "svelte";
+	import "./styles.scss"
 
-	import Board from './components/Board.svelte';
-
-	onMount(async () => {});
+	import Header from './components/Header.svelte';
+	import Main from './components/Main.svelte';
 </script>
 
-<main>
-	<h1>Hello from Board</h1>
-	<Board></Board>
-</main>
+<section class="section">
+	<Header />
+	<Main />
+</section>
 
 <style>
-	main {
-		padding: 1em;
-	}
-
-	h1 {
-		text-align: center;
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
+	:global(body) {
+		background-color: #34495e;
+		width: 100vw;
+		height: 100vh;
 	}
 </style>
