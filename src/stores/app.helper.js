@@ -5,12 +5,10 @@ import {
 import {
     app
 } from './app';
-
 import {
     GameState,
     HistoryStack,
-} from '.././helpers/classes';
-
+} from '.././helpers/state';
 import {
     updateUserInterface,
 } from '.././helpers/utilities';
@@ -21,9 +19,8 @@ const init = () => {
         MoveHistory: new HistoryStack(),
         isInProgress: false,
         selectedId: -1,
-        agent: 'mtdfAgent',
-        depthLimit: 1,
-        timeLimit: 1,
+        depthLimit: 6,
+        timeLimit: 2,
         computerPlaysAs: -1,
         isInProgress: false,
     });

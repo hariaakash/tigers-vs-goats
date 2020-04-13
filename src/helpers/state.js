@@ -8,8 +8,9 @@ export class GameState {
     constructor() {
         this.SideToPlay = 1; //0 === Tigers, 1 === Goats same as AgentIndex
         this.OutsideGoats = 15;
+        this.OutsideTigers = 3;
         //array of 23 elements corresponding to 23 squares of the board. Each square is either empty or has a goat or a tiger in it.
-        this.CurrentPosition = ['T', 'E', 'E', 'T', 'T', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'];
+        this.CurrentPosition = Array(23).fill('E');
         this.Hash = 0; // A compact representation of the game state. Hash is a 51 bit binary number.
         this.Result = -1; // 0 === Tigers win, 1 === Goats Win, 2 === Draw, -1 === no result
     }
@@ -31,14 +32,20 @@ export class GameState {
                 }
             }
         } else {
-            for (var i = 0; i < this.CurrentPosition.length; i++) {
-                if (this.CurrentPosition[i] === 'T') {
-                    for (var j = 0; j < CaptureActions.length; j++)
-                        if (CaptureActions[j][0] === i && this.CurrentPosition[CaptureActions[j][1]] === 'G' && this.CurrentPosition[CaptureActions[j][2]] === 'E')
-                            actions.push(CaptureActions[j]);
-                    for (var j = 0; j < MoveActions[i].length; j++)
-                        if (this.CurrentPosition[MoveActions[i][j]] === 'E')
-                            actions.push([i, -1, MoveActions[i][j]]);
+            if (this.OutsideTigers > 0) {
+                for (var i = 0; i < this.CurrentPosition.length; i++)
+                    if (this.CurrentPosition[i] === 'E')
+                        actions.push([-1, -1, i]);
+            } else {
+                for (var i = 0; i < this.CurrentPosition.length; i++) {
+                    if (this.CurrentPosition[i] === 'T') {
+                        for (var j = 0; j < CaptureActions.length; j++)
+                            if (CaptureActions[j][0] === i && this.CurrentPosition[CaptureActions[j][1]] === 'G' && this.CurrentPosition[CaptureActions[j][2]] === 'E')
+                                actions.push(CaptureActions[j]);
+                        for (var j = 0; j < MoveActions[i].length; j++)
+                            if (this.CurrentPosition[MoveActions[i][j]] === 'E')
+                                actions.push([i, -1, MoveActions[i][j]]);
+                    }
                 }
             }
         }
@@ -49,6 +56,7 @@ export class GameState {
     generateSuccessor(action, history) {
         var state = new GameState();
         state.OutsideGoats = this.OutsideGoats;
+        state.OutsideTigers = this.OutsideTigers;
         state.Result = this.Result;
         state.SideToPlay = (this.SideToPlay + 1) % 2;
         state.CurrentPosition = this.CurrentPosition.slice(0);
@@ -56,8 +64,13 @@ export class GameState {
             state.Result = state.SideToPlay;
         else {
             if (action[0] === -1) {
-                state.OutsideGoats -= 1;
-                state.CurrentPosition[action[2]] = 'G';
+                if (this.SideToPlay === 1) {
+                    state.OutsideGoats -= 1;
+                    state.CurrentPosition[action[2]] = 'G';
+                } else {
+                    state.OutsideTigers -= 1;
+                    state.CurrentPosition[action[2]] = 'T';
+                }
             } else {
                 var temp = state.CurrentPosition[action[0]];
                 state.CurrentPosition[action[0]] = 'E';

@@ -4,15 +4,11 @@
 	} from 'svelte';
 
 	import positions from '../static/boardPositions';
-
-
 	import {
 		processUserInput,
 	} from '.././helpers/utilities.js';
 
 	const imageSize = 8;
-	const goat = './img/goat.svg';
-	const tiger = './img/tiger.svg';
 	const empty = './img/empty.png';
 
 	onMount(async () => {
