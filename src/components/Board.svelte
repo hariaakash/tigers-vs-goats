@@ -10,7 +10,9 @@
 
 	const imageSize = 8;
 	const circleRadius = 2.5;
-	const empty = './img/empty.png';
+	const img = {
+		empty: './img/empty.svg',
+	};
 
 	onMount(async () => {
 		const board = document.getElementById('board');
@@ -43,12 +45,12 @@
 		text-anchor: middle;
 	}
 
-	.bg {
+	.is-primer-blue {
 		background: #222f3e;
 	}
 </style>
 
-<div class="notification bg">
+<div class="content is-primer-blue">
 	<svg id="board" viewBox="0 0 100 100" height="80%" width="80%">
 		<g>
 			<!-- Outline -->
@@ -67,7 +69,7 @@
 					<image
 						on:click="{callProcessHandler}"
 						id="i{key}"
-						href="{empty}"
+						href="{img.empty}"
 						x="{position.cx - imageSize/2}"
 						y="{position.cy - imageSize/2}"
 						height="{imageSize}"

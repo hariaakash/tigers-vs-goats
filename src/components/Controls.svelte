@@ -21,19 +21,19 @@
 
 <div class="card">
 	<header class="card-header">
-		<p class="card-header-title">Game Controls</p>
+		<h1 class="card-header-title">Game Controls</h1>
 	</header>
 	<div class="card-content">
 		<div class="field is-horizontal">
-			<div class="field-label">
-				<label class="label">Game Type</label>
+			<div class="field-label is-normal">
+				<label class="label">Mode</label>
 			</div>
 			<div class="field-body">
-				<div class="field">
+				<div class="field is-narrow">
 					<div class="control">
-						<div class="select">
+						<div class="select is-full-width">
 							<select id="gameType">
-								<optgroup label="Computer plays as:">
+								<optgroup label="Game Types:">
 									<option value="0">Computer plays as tigers</option>
 									<option value="1">Computer plays as goats</option>
 									<option value="2">Computer vs Computer</option>
