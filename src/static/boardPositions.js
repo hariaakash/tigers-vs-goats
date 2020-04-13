@@ -3,11 +3,11 @@ export default [{
         cy: 10
     },
     {
-        cx: 10,
+        cx: 5,
         cy: 40
     },
     {
-        cx: 35,
+        cx: 33,
         cy: 40
     },
     {
@@ -19,19 +19,19 @@ export default [{
         cy: 40
     },
     {
-        cx: 65,
+        cx: 67,
         cy: 40
     },
     {
-        cx: 90,
+        cx: 95,
         cy: 40
     },
     {
-        cx: 10,
+        cx: 5,
         cy: 55
     },
     {
-        cx: 28,
+        cx: 25,
         cy: 55
     },
     {
@@ -43,19 +43,19 @@ export default [{
         cy: 55
     },
     {
-        cx: 72,
+        cx: 75,
         cy: 55
     },
     {
-        cx: 90,
+        cx: 95,
         cy: 55
     },
     {
-        cx: 10,
+        cx: 5,
         cy: 70
     },
     {
-        cx: 20,
+        cx: 16,
         cy: 70
     },
     {
@@ -67,15 +67,15 @@ export default [{
         cy: 70
     },
     {
-        cx: 80,
+        cx: 84,
         cy: 70
     },
     {
-        cx: 90,
+        cx: 95,
         cy: 70
     },
     {
-        cx: 10,
+        cx: 5,
         cy: 90
     },
     {
@@ -87,7 +87,7 @@ export default [{
         cy: 90
     },
     {
-        cx: 90,
+        cx: 95,
         cy: 90
     },
 ];

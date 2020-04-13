@@ -12,7 +12,7 @@
 
 <style>
 	:global(body) {
-		background-color: #34495e;
+		background-color: #ff7f50;
 		width: 100vw;
 		height: 100vh;
 	}

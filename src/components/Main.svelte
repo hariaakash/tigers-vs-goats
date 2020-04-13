@@ -3,10 +3,9 @@
         onMount
     } from "svelte";
 
+    import BoardHeader from './BoardHeader.svelte';
     import Board from './Board.svelte';
     import Controls from './Controls.svelte';
-
-    onMount(async () => {});
 </script>
 
 <div class="container">
@@ -15,6 +14,7 @@
             <Board />
         </div>
         <div class="column is-4">
+            <BoardHeader />
             <Controls />
         </div>
     </div>
