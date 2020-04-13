@@ -24,6 +24,8 @@ const init = () => {
         agent: 'mtdfAgent',
         depthLimit: 1,
         timeLimit: 1,
+        computerPlaysAs: -1,
+        isInProgress: false,
     });
     updateUserInterface();
 };

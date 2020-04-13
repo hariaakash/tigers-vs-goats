@@ -48,7 +48,8 @@
 			</div>
 			<p>Side to move: <span id="SideToMove">Tiger</span></p>
 			<p>Game Status: <span id="Status"></span></p>
-			<p>Outside Goats: <span id="OutSideGoats">0</span></p>
+			<p>Outside Goats: <span id="outSideGoats">0</span></p>
+			<p>Outside Tigers: <span id="outSideTigers">0</span></p>
 			<button on:click="{startGame}" id="StartButton" class="button" type="button">Start</button>
 			<button on:click="{moveBack}" id="MoveBackButton" class="button" type="button">&lt;</button>
 			<button on:click="{moveNow}" id="MoveNowButton" class="button" type="button">Move Now!</button>

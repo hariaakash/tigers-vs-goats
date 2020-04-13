@@ -2,7 +2,7 @@
 
 export const updateUserInterface = () => {
     const side = document.getElementById('SideToMove');
-    const outside = document.getElementById('OutSideGoats');
+    const outside = document.getElementById('outSideGoats');
     const status = document.getElementById('Status');
     const gameState = app.data().currentGameState;
     document.getElementById('MoveBackButton').disabled = (app.data().MoveHistory.Pointer < 2);
@@ -127,7 +127,6 @@ const declareVictory = () => {
 }
 
 const computerPlay = (agentIndex) => {
-    const agentName = app.data().agent;
     const elements = {
         timeLimit: app.data().timeLimit,
         depthLimit: app.data().depthLimit,
@@ -153,7 +152,7 @@ const computerPlay = (agentIndex) => {
             }
         }
     }, 1000);
-    app.data().AgentWorker.postMessage([app.data().currentGameState, agentName, agentIndex, app.data().MoveHistory]);
+    app.data().AgentWorker.postMessage([app.data().currentGameState, agentIndex, app.data().MoveHistory]);
     app.data().AgentTimers[1] = setTimeout(() => {
         if (!app.data().AgentTerminated) {
             app.data().AgentTerminated = true;
@@ -223,18 +222,22 @@ export const moveForward = () => {
     updateUserInterface();
 }
 
+// -1 = No gametype chosen
 // 0 = Computer plays as tigers
 // 1 = Computer plays as goats
 // 2 = Computer vs Computer
 // 3 = Human vs Human
 export const startGame = () => {
-    app.data().isInProgress = true;
     const cmpside = document.getElementById('gameType');
-    cmpside.disabled = true;
-    app.data().computerPlaysAs = parseInt(cmpside.value);
-    updateUserInterface();
-    if (app.data().currentGameState.SideToPlay === app.data().computerPlaysAs || app.data().computerPlaysAs == 2)
-        computerPlay(app.data().currentGameState.SideToPlay);
+    const gameType = parseInt(cmpside.value);
+    if (gameType > -1) {
+        cmpside.disabled = true;
+        app.data().isInProgress = true;
+        app.data().computerPlaysAs = gameType;
+        updateUserInterface();
+        if (app.data().currentGameState.SideToPlay === gameType || gameType == 2)
+            computerPlay(app.data().currentGameState.SideToPlay);
+    }
 }
 
 export const resetGame = () => {
@@ -246,5 +249,4 @@ export const resetGame = () => {
     }
     app.init();
     document.getElementById('StartButton').disabled = false;
-    updateUserInterface();
 }
