@@ -11,9 +11,8 @@
 </section>
 
 <style>
-	:global(body) {
+	:global(html, body) {
 		background-color: #ff7f50;
-		width: 100vw;
-		height: 100vh;
+		min-height: 100vh;
 	}
 </style>

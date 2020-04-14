@@ -7,16 +7,19 @@
 		"start": "sirv public"
 	},
 	"devDependencies": {
+		"@fortawesome/free-solid-svg-icons": "^5.13.0",
 		"@rollup/plugin-commonjs": "^11.0.0",
 		"@rollup/plugin-node-resolve": "^7.0.0",
 		"bulma": "^0.8.2",
+		"fa-svelte": "^3.1.0",
 		"node-sass": "^4.13.1",
 		"rollup": "^1.20.0",
 		"rollup-plugin-livereload": "^1.0.0",
 		"rollup-plugin-postcss": "^2.5.0",
 		"rollup-plugin-svelte": "^5.0.3",
 		"rollup-plugin-terser": "^5.1.2",
-		"svelte": "^3.0.0"
+		"svelte": "^3.0.0",
+		"svelte-fullscreen": "^1.1.1"
 	},
 	"dependencies": {
 		"sirv-cli": "^0.4.4"
