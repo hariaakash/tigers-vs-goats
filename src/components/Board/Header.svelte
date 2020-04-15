@@ -17,15 +17,25 @@
 		faTrash
 	} from '@fortawesome/free-solid-svg-icons/faTrash';
 
+	import {
+		faAngleLeft
+	} from '@fortawesome/free-solid-svg-icons/faAngleLeft';
+	import {
+		faAngleRight
+	} from '@fortawesome/free-solid-svg-icons/faAngleRight';
+	import {
+		faAngleDoubleRight
+	} from '@fortawesome/free-solid-svg-icons/faAngleDoubleRight';
+
 	import app from '../../stores/app.helper';
 
 	import {
-		moveNow,
-		moveBack,
-		moveForward,
 		startGame,
 		stopGame,
 		resetGame,
+		moveNow,
+		moveBack,
+		moveForward,
 	} from '../../helpers/utilities';
 
 	export let isFull;
@@ -38,6 +48,7 @@
 
 	$: fullscreenIcon = isFull ? faCompress : faExpand;
 	$: playIcon = $app.isInProgress ? faPause : faPlay;
+
 	const toggleGame = () => {
 		return $app.isInProgress ? stopGame() : startGame();
 	}
@@ -46,17 +57,24 @@
 <style>
 	.is-orange {
 		background: #ff7f50;
-		color: #000000;
 	}
 
 	button {
 		border: none;
 	}
+
+	button[disabled] {
+		opacity: 0.5;
+		background-color: #ff7f50;
+		border: none;
+		margin-left: 1px;
+		margin-right: 1px;
+	}
 </style>
 
 <div class="columns">
-	<div class="column is-3">
-		<div class="tags is-pulled-left has-addons are-large">
+	<div class="column">
+		<div class="tags has-addons are-large is-centered">
 			<span class="tag is-orange">
 				<figure class="image is-24x24">
 					<img src="{img.goat}" alt="goats" />
@@ -65,19 +83,34 @@
 			<span id="outSideGoats" class="tag"></span>
 		</div>
 	</div>
-	<div class="column is-6">
-		<button id="playButton" on:click="{toggleGame}" class="button is-orange">
-			<Icon icon="{playIcon}" class="has-text-white" />
-		</button>
-		<button id="resetButton" on:click="{resetGame}" class="button is-orange">
-			<Icon icon="{faTrash}" class="has-text-white" />
-		</button>
-		<button on:click="{onToggle}" class="button is-orange">
-			<Icon icon="{fullscreenIcon}" class="has-text-white" />
-		</button>
+	<div class="column">
+		<div class="buttons has-addons is-centered">
+			<button on:click="{toggleGame}" class="button is-orange">
+				<Icon icon="{playIcon}" class="has-text-white" />
+			</button>
+			<button on:click="{resetGame}" class="button is-orange">
+				<Icon icon="{faTrash}" class="has-text-white" />
+			</button>
+			<button on:click="{onToggle}" class="button is-orange">
+				<Icon icon="{fullscreenIcon}" class="has-text-white" />
+			</button>
+		</div>
 	</div>
-	<div class="column is-3">
-		<div class="tags is-pulled-right has-addons are-large">
+	<div class="column">
+		<div class="buttons has-addons is-centered">
+			<button id="moveBackButton" on:click="{moveBack}" class="button is-orange" disabled>
+				<Icon icon="{faAngleLeft}" class="has-text-white" />
+			</button>
+			<button id="moveNowButton" on:click="{moveNow}" class="button is-orange" disabled>
+				<Icon icon="{faAngleDoubleRight}" class="has-text-white" />
+			</button>
+			<button id="moveForwardButton" on:click="{moveForward}" class="button is-orange" disabled>
+				<Icon icon="{faAngleRight}" class="has-text-white" />
+			</button>
+		</div>
+	</div>
+	<div class="column">
+		<div class="tags has-addons are-large is-centered">
 			<span id="outSideTigers" class="tag"></span>
 			<span class="tag is-orange">
 				<figure class="image is-24x24">

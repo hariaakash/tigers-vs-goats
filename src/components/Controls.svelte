@@ -5,12 +5,6 @@
 
 	import app from '../stores/app.helper';
 
-	import {
-		moveNow,
-		moveBack,
-		moveForward,
-	} from '../helpers/utilities';
-
 	onMount(async () => {
 		app.init();
 	});
@@ -41,11 +35,6 @@
 					</div>
 				</div>
 			</div>
-		</div>
-		<div class="buttons has-addons is-centered">
-			<button on:click="{moveBack}" id="moveBackButton" class="button">&lt;</button>
-			<button on:click="{moveNow}" id="moveNowButton" class="button">Move Now!</button>
-			<button on:click="{moveForward}" id="moveForwardButton" class="button">&gt;</button>
 		</div>
 	</div>
 </div>
