@@ -36,7 +36,7 @@
 		</div>
 	</div>
 	<div class="column is-4">
-		<button on:click="{onToggle}" class="button">
+		<button on:click="{onToggle}" class="button is-rounded">
 			<Icon icon="{fullscreenIcon}" />
 		</button>
 	</div>
