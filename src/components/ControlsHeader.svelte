@@ -3,7 +3,7 @@
 		<p class="card-header-title">Game Status</p>
 	</header>
 	<div class="card-content">
-		<p>Side to move: <span id="SideToMove">Tiger</span></p>
-		<p>Game Status: <span id="Status"></span></p>
+		<p>Side to move: <span id="sideToMove">Tiger</span></p>
+		<p>Game Status: <span id="gameStatus"></span></p>
 	</div>
 </div>

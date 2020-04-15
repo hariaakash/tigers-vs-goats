@@ -9,10 +9,7 @@
 		moveNow,
 		moveBack,
 		moveForward,
-		startGame,
-		stopGame,
-		resetGame,
-	} from '.././helpers/utilities';
+	} from '../helpers/utilities';
 
 	onMount(async () => {
 		app.init();
@@ -46,14 +43,9 @@
 			</div>
 		</div>
 		<div class="buttons has-addons is-centered">
-			<button on:click="{startGame}" id="StartButton" class="button">Start</button>
-			<button on:click="{stopGame}" id="StopButton" class="button">Stop</button>
-			<button on:click="{resetGame}" id="ResetButton" class="button">Reset</button>
-		</div>
-		<div class="buttons has-addons is-centered">
-			<button on:click="{moveBack}" id="MoveBackButton" class="button">&lt;</button>
-			<button on:click="{moveNow}" id="MoveNowButton" class="button">Move Now!</button>
-			<button on:click="{moveForward}" id="MoveForwardButton" class="button">&gt;</button>
+			<button on:click="{moveBack}" id="moveBackButton" class="button">&lt;</button>
+			<button on:click="{moveNow}" id="moveNowButton" class="button">Move Now!</button>
+			<button on:click="{moveForward}" id="moveForwardButton" class="button">&gt;</button>
 		</div>
 	</div>
 </div>

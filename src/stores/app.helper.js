@@ -8,28 +8,35 @@ import {
 import {
     GameState,
     HistoryStack,
-} from '.././helpers/state';
+} from '../helpers/state';
 import {
     updateUserInterface,
-} from '.././helpers/utilities';
+} from '../helpers/utilities';
 
-const init = () => {
-    app.set({
-        currentGameState: new GameState(),
-        MoveHistory: new HistoryStack(),
-        isInProgress: false,
-        selectedId: -1,
-        depthLimit: 6,
-        timeLimit: 2,
-        computerPlaysAs: -1,
-        isInProgress: false,
-    });
-    updateUserInterface();
+const methods = {
+    init: () => {
+        app.set({
+            currentGameState: new GameState(),
+            MoveHistory: new HistoryStack(),
+            isInProgress: false,
+            selectedId: -1,
+            depthLimit: 6,
+            timeLimit: 2,
+            computerPlaysAs: -1,
+            isInProgress: false,
+        });
+        updateUserInterface();
+    },
+    data: () => get(app),
+    updateField: (key, value) => {
+        app.update((data) => {
+            data[key] = value;
+            return data;
+        });
+    }
 };
 
-const data = () => get(app);
-
 export default {
-    init,
-    data,
+    ...methods,
+    ...app,
 }

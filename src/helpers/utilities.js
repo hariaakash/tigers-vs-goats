@@ -1,18 +1,18 @@
 ﻿import app from '../stores/app.helper';
 
 export const updateUserInterface = () => {
-    app.data().selectedId = -1;
+    app.updateField('selectedId', -1);
 
-    const status = document.getElementById('Status');
+    const status = document.getElementById('gameStatus');
     const gameState = app.data().currentGameState;
 
     // Handle Board
-    document.getElementById('MoveBackButton').disabled = (app.data().MoveHistory.Pointer < 2);
-    document.getElementById('MoveForwardButton').disabled = !app.data().MoveHistory.InternalArray[app.data().MoveHistory.Pointer];
-    document.getElementById('MoveNowButton').disabled = app.data().currentGameState.SideToPlay !== app.data().ComputerPlaysAs;
+    document.getElementById('moveBackButton').disabled = (app.data().MoveHistory.Pointer < 2);
+    document.getElementById('moveForwardButton').disabled = !app.data().MoveHistory.InternalArray[app.data().MoveHistory.Pointer];
+    document.getElementById('moveNowButton').disabled = app.data().currentGameState.SideToPlay !== app.data().ComputerPlaysAs;
     document.getElementById('outSideGoats').innerHTML = gameState.OutsideGoats;
     document.getElementById('outSideTigers').innerHTML = gameState.OutsideTigers;
-    document.getElementById('SideToMove').innerHTML = gameState.SideToPlay === 0 ? '🐅 Tigers' : '🐐 Goats';
+    document.getElementById('sideToMove').innerHTML = gameState.SideToPlay === 0 ? '🐅 Tigers' : '🐐 Goats';
     for (var i = 0; i < gameState.CurrentPosition.length; i++) {
         const img = document.getElementById(`i${i}`);
         if (gameState.CurrentPosition[i] === 'G') {
@@ -28,25 +28,16 @@ export const updateUserInterface = () => {
     }
 
     // Handle Board Results
-    const button = {
-        start: document.getElementById('StartButton'),
-        stop: document.getElementById('StopButton')
-    }
     if (gameState.Result === -1 && app.data().isInProgress) {
         status.innerHTML = 'In Progress';
-        button.stop.disabled = false;
-        button.start.disabled = true;
     } else {
-        button.start.disabled = true;
         if (gameState.Result === 0) status.innerHTML = '🐅 Tigers Win!';
         else if (gameState.Result === 1) status.innerHTML = '🐐 Goats Win!';
         else if (gameState.Result === 2) status.innerHTML = 'Draw';
         else {
             status.innerHTML = 'Stopped';
             document.getElementById('gameType').disabled = false;
-            button.start.disabled = false;
         }
-        button.stop.disabled = true;
     }
 }
 
@@ -120,7 +111,7 @@ export const processUserInput = (element) => {
                 }
             } else {
                 if (element.class === 'tiger') {
-                    app.data().selectedId = element.id;
+                    app.updateField('selectedId', element.id);
                 } else if (element.class === 'empty') {
                     if (app.data().selectedId > -1) {
                         var isLegal = false;
@@ -147,7 +138,7 @@ export const processUserInput = (element) => {
 }
 
 const declareVictory = () => {
-    app.data().isInProgress = false;
+    app.updateField('isInProgress', false);
     updateUserInterface();
 }
 
@@ -157,7 +148,7 @@ const computerPlay = (agentIndex) => {
         depthLimit: app.data().depthLimit,
     };
     app.data().AgentTerminated = false;
-    document.getElementById('MoveNowButton').disabled = false;
+    document.getElementById('moveNowButton').disabled = false;
     app.data().AgentWorker = new Worker('./js/Engine.js');
     app.data().AgentTimers = new Array(3);
     app.data().AgentWorker.onmessage = (e) => {
@@ -187,7 +178,7 @@ const computerPlay = (agentIndex) => {
                     app.data().isInProgress = false;
                     terminateAgent(true);
                 }
-                document.getElementById('MoveNowButton').disabled = true;
+                document.getElementById('moveNowButton').disabled = true;
             }
             updateUserInterface();
             if (app.data().isInProgress && app.data().computerPlaysAs === 2)
@@ -205,14 +196,8 @@ const terminateAgent = (force = false) => {
 
 export const moveNow = () => terminateAgent();
 
-export const stopGame = () => {
-    app.data().isInProgress = false;
-    terminateAgent();
-    updateUserInterface();
-}
-
 export const moveBack = () => {
-    app.data().isInProgress = false;
+    app.updateField('isInProgress', false);
     terminateAgent();
     if (app.data().MoveHistory.Pointer > 1) {
         app.data().currentGameState = app.data().MoveHistory.InternalArray[app.data().MoveHistory.Pointer - 2];
@@ -222,7 +207,7 @@ export const moveBack = () => {
 }
 
 export const moveForward = () => {
-    app.data().isInProgress = false;
+    app.updateField('isInProgress', false);
     terminateAgent();
     const state = app.data().MoveHistory.InternalArray[app.data().MoveHistory.Pointer];
     if (state) {
@@ -240,7 +225,7 @@ export const moveForward = () => {
 export const startGame = () => {
     const cmpside = document.getElementById('gameType');
     const gameType = parseInt(cmpside.value);
-    if (gameType > -1) {
+    if (gameType > -1 && app.data().currentGameState.Result === -1) {
         cmpside.disabled = true;
         app.data().isInProgress = true;
         app.data().computerPlaysAs = gameType;
@@ -248,6 +233,12 @@ export const startGame = () => {
         if (app.data().currentGameState.SideToPlay === gameType || gameType == 2)
             computerPlay(app.data().currentGameState.SideToPlay);
     }
+}
+
+export const stopGame = () => {
+    app.updateField('isInProgress', false);
+    terminateAgent();
+    updateUserInterface();
 }
 
 export const resetGame = () => {
@@ -258,5 +249,4 @@ export const resetGame = () => {
         }
     }
     app.init();
-    document.getElementById('StartButton').disabled = false;
 }
